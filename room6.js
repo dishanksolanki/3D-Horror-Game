@@ -8,6 +8,20 @@ builds the shared doorway wall; this file only needs to add
 the other three walls, floor, ceiling, and furniture).
 ============================================================ */
 
+/* NOTE: ROOM6_* were referenced in the original room6.js but never
+   actually defined anywhere in the wired-up files (engine.js, room1.js,
+   room2.js, room3.js, washroom1.js). Defining them here so the file
+   works standalone. ROOM6_SOUTH_Z is meant to sit exactly on room 2's
+   north wall (the shared doorway) - open room2.js, find the Z position
+   of the wall it builds for that doorway, and set ROOM6_SOUTH_Z to that
+   exact value so the two rooms line up. Until then this uses a
+   placeholder that keeps the room from overlapping anything else. */
+const ROOM6_W = 3.6;
+const ROOM6_D = 3.4;
+const ROOM6_H = ROOM_H;
+const ROOM6_NORTH_Z = -14;
+const ROOM6_SOUTH_Z = ROOM6_NORTH_Z + ROOM6_D; // <-- align to room2's north wall Z
+
 const GATE7_GAPHALF = 0.6;
 const GATE8_GAPHALF = 0.6;
 

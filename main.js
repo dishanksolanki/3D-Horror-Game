@@ -3,8 +3,8 @@
    Boots the whole haveli: builds every room in order, wires up
    controls, and starts the render loop.
    Load this file LAST, after engine.js, room1.js, room2.js,
-   room3.js, and washroom1.js.
-   ============================================================ */
+   room3.js, room5.js, and washroom1.js.
+============================================================ */
 
 function init(){
   scene = new THREE.Scene();
@@ -49,6 +49,7 @@ function init(){
   buildRoom2Furniture();
   buildCorridor2();
   buildRoom3();
+  buildRoom5();
   buildRoom4();
 
   window.addEventListener('resize', onResize);

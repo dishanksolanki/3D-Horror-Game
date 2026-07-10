@@ -187,9 +187,11 @@ function buildRoom3(){
   // properly block movement
   obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
 
-  // a separate, narrow bridging zone spanning ONLY the doorway gap itself
-  // (not the whole wall) — this is what actually lets you walk from room3
-  // into room5, while the solid panels on either side of the gap remain
-  // impassable because no zone covers that X/Z combination
-  obstacles.push({minX:ROOM3_EAST_X-0.5, maxX:ROOM5_WEST_X+0.5, minZ:cz-gapHalfE, maxZ:cz+gapHalfE, isRoomBound:true});
+  // a separate, narrow bridging zone spanning ONLY the doorway gap's
+  // width (Z axis) — not the whole wall — so the solid panels on either
+  // side stay impassable. Made deep enough (X axis) that after the
+  // player-radius margin is applied on both ends, it still overlaps
+  // with room3's and room5's own margined zones, so there's no dead
+  // strip where neither zone covers the player.
+  obstacles.push({minX:ROOM3_EAST_X-1.0, maxX:ROOM5_WEST_X+1.0, minZ:cz-gapHalfE, maxZ:cz+gapHalfE, isRoomBound:true});
 }

@@ -2,7 +2,7 @@
    HAVELI OF SHADOWS — ROOM 3 + the east branch corridor that
    opens off Room 2's east wall.
    Requires engine.js and room2.js to be loaded first.
-============================================================ */
+   ============================================================ */
 
 function buildCorridor2(){
   // a second passage, running EAST from a new gate in room 2's own east
@@ -10,7 +10,6 @@ function buildCorridor2(){
   // sits flush beside room 2. Same materials/scale language as the first
   // corridor so it reads as part of the same haveli.
   const centerX = (CORR2_WEST_X + CORR2_EAST_X)/2;
-
   const wTex = wallTexture(); wTex.repeat.set(1, 1.3);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
@@ -68,12 +67,11 @@ function buildCorridor2(){
 function buildRoom3(){
   // room 3: sits flush beside room 2 (same z-center), entered from the
   // corridor2 branch that opens off room 2's own east wall. West wall
-  // carries that doorway. East wall now also carries a doorway, opening
-  // straight into room 5 (no corridor between them). North/south walls
-  // are still solid dead-ends for now.
+  // carries the doorway in from corridor2; east wall now carries a second
+  // doorway straight through into room 5 (no corridor in between); north
+  // and south walls remain solid dead-ends for now.
   const cz = ROOM3_CENTER_Z;
   const centerX = (ROOM3_WEST_X + ROOM3_EAST_X)/2;
-
   const wTex = wallTexture(); wTex.repeat.set(4, 1.5);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
@@ -90,34 +88,34 @@ function buildRoom3(){
   ceil.position.set(centerX, ROOM3_H, cz);
   scene.add(ceil);
 
-  // east wall with a doorway gap -> straight into room 5
-  const eGapHalf = DOOR35_GAPHALF;
-  const eSideD = (ROOM3_W/2) - eGapHalf;
+  // --- east wall: now has a doorway gap into room 5 (was a solid dead-end) ---
+  const gapHalfE = ROOM5_GAPHALF;
+  const sideDE = (ROOM3_W/2) - gapHalfE;
   const eastTex = wallTexture(); eastTex.repeat.set(1.4,1.5);
-  const eastMat = new THREE.MeshStandardMaterial({map:eastTex, roughness:0.95, metalness:0.02, side:THREE.DoubleSide});
+  const eastMat = new THREE.MeshStandardMaterial({map:eastTex, roughness:0.95});
 
-  const eNearPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM3_H), eastMat);
-  eNearPanel.position.set(ROOM3_EAST_X, ROOM3_H/2, cz-(eGapHalf+eSideD/2));
-  eNearPanel.rotation.y = -Math.PI/2;
-  scene.add(eNearPanel);
+  const nearPanelE = new THREE.Mesh(new THREE.PlaneGeometry(sideDE, ROOM3_H), eastMat);
+  nearPanelE.position.set(ROOM3_EAST_X, ROOM3_H/2, cz-(gapHalfE+sideDE/2));
+  nearPanelE.rotation.y = -Math.PI/2;
+  scene.add(nearPanelE);
 
-  const eFarPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM3_H), eastMat.clone());
-  eFarPanel.position.set(ROOM3_EAST_X, ROOM3_H/2, cz+(eGapHalf+eSideD/2));
-  eFarPanel.rotation.y = -Math.PI/2;
-  scene.add(eFarPanel);
+  const farPanelE = new THREE.Mesh(new THREE.PlaneGeometry(sideDE, ROOM3_H), eastMat.clone());
+  farPanelE.position.set(ROOM3_EAST_X, ROOM3_H/2, cz+(gapHalfE+sideDE/2));
+  farPanelE.rotation.y = -Math.PI/2;
+  scene.add(farPanelE);
 
-  const eLintel = new THREE.Mesh(new THREE.PlaneGeometry(eGapHalf*2+0.4, ROOM3_H-DOOR_H), eastMat.clone());
-  eLintel.position.set(ROOM3_EAST_X, DOOR_H+(ROOM3_H-DOOR_H)/2, cz);
-  eLintel.rotation.y = -Math.PI/2;
-  scene.add(eLintel);
+  const lintelE = new THREE.Mesh(new THREE.PlaneGeometry(gapHalfE*2+0.4, ROOM3_H-DOOR_H), eastMat.clone());
+  lintelE.position.set(ROOM3_EAST_X, DOOR_H+(ROOM3_H-DOOR_H)/2, cz);
+  lintelE.rotation.y = -Math.PI/2;
+  scene.add(lintelE);
 
-  // carved wooden door frame (east doorway)
-  const eFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
-  const eFrameSide = new THREE.BoxGeometry(0.3, DOOR_H+0.1, 0.18);
-  const efn = new THREE.Mesh(eFrameSide, eFrameMat); efn.position.set(ROOM3_EAST_X, DOOR_H/2+0.05, cz-eGapHalf-0.09);
-  const efs = new THREE.Mesh(eFrameSide, eFrameMat); efs.position.set(ROOM3_EAST_X, DOOR_H/2+0.05, cz+eGapHalf+0.09);
-  const eft = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,eGapHalf*2+0.36), eFrameMat); eft.position.set(ROOM3_EAST_X,DOOR_H+0.1,cz);
-  scene.add(efn,efs,eft);
+  // carved wooden door frame for the room5 doorway
+  const frameMatE = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const frameSideE = new THREE.BoxGeometry(0.3, DOOR_H+0.1, 0.18);
+  const fnE = new THREE.Mesh(frameSideE, frameMatE); fnE.position.set(ROOM3_EAST_X, DOOR_H/2+0.05, cz-gapHalfE-0.09);
+  const fsE = new THREE.Mesh(frameSideE, frameMatE); fsE.position.set(ROOM3_EAST_X, DOOR_H/2+0.05, cz+gapHalfE+0.09);
+  const ftE = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,gapHalfE*2+0.36), frameMatE); ftE.position.set(ROOM3_EAST_X,DOOR_H+0.1,cz);
+  scene.add(fnE,fsE,ftE);
 
   // north and south walls, solid for now
   const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM3_D, ROOM3_H), wallMat.clone());
@@ -159,7 +157,8 @@ function buildRoom3(){
   const ft = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,gapHalf*2+0.36), frameMat); ft.position.set(ROOM3_WEST_X,DOOR_H+0.1,cz);
   scene.add(fn,fs,ft);
 
-  // baseboard trim
+  // baseboard trim (east trim removed — that wall now has a doorway, not a
+  // flush dead-end, so a single unbroken trim strip no longer makes sense there)
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
   const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM3_D,0.15,0.1), trimMat);
   trimN.position.set(centerX,0.08,cz-ROOM3_W/2); scene.add(trimN);
@@ -180,14 +179,11 @@ function buildRoom3(){
     web.position.set(...pos); web.rotation.set(...rot);
     scene.add(web);
   };
-  fan(1.2, [ROOM3_WEST_X+0.05, ROOM3_H-0.04, cz-ROOM3_W/2+0.05], [0, Math.PI/4, 0], 7, 0.2);
-  fan(1.1, [ROOM3_WEST_X+0.03, ROOM3_H-0.04, cz+ROOM3_W/2-0.05], [0, -Math.PI/4, 0], 6, 0.2);
+  fan(1.2, [ROOM3_EAST_X-0.05, ROOM3_H-0.04, cz-ROOM3_W/2+0.05], [0, Math.PI/4, 0], 7, 0.2);
+  fan(1.1, [ROOM3_EAST_X-0.03, ROOM3_H-0.04, cz+ROOM3_W/2-0.05], [0, -Math.PI/4, 0], 6, 0.2);
 
-  // walkable zone - stops exactly at the wall on every side
-  obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
-
-  // a narrow bridge zone, only as wide as the doorway gap itself, so the
-  // player can only cross into room 5 through the actual opening and is
-  // blocked everywhere else along the shared wall
-  obstacles.push({minX:ROOM3_EAST_X-0.6, maxX:ROOM5_WEST_X+0.6, minZ:cz-eGapHalf, maxZ:cz+eGapHalf, isRoomBound:true});
+  // walkable zone — extended past the east wall so it overlaps room5's
+  // zone at the new doorway, exactly like the west-side doorway into
+  // corridor2 already does
+  obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X+1.0, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
 }

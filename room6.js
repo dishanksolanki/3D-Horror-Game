@@ -73,9 +73,16 @@ function buildRoom6(){
   fan(1.0, [cx-ROOM6_W/2+0.05, ROOM6_H-0.04, ROOM6_NORTH_Z+0.05], [0, Math.PI/4, 0], 7, 0.2);
   fan(0.9, [cx+ROOM6_W/2-0.05, ROOM6_H-0.04, ROOM6_NORTH_Z+0.05], [0, -Math.PI/4+Math.PI/2, 0], 7, 0.25);
 
-  // walkable zone, overlapping south into room 2 so the shared doorway
-  // feels seamless in both directions
-  obstacles.push({minX:cx-ROOM6_W/2, maxX:cx+ROOM6_W/2, minZ:ROOM6_NORTH_Z, maxZ:ROOM6_SOUTH_Z+1.0, isRoomBound:true});
+  // walkable zone, stopping exactly at the shared wall with room 2 - it no
+  // longer overlaps the whole wall width, so the solid panels either side
+  // of the doorway now properly block the player
+  obstacles.push({minX:cx-ROOM6_W/2, maxX:cx+ROOM6_W/2, minZ:ROOM6_NORTH_Z, maxZ:ROOM6_SOUTH_Z, isRoomBound:true});
+
+  // narrow bridging zone spanning only the gate's own width, overlapping
+  // 1.0m into both rooms - this is the only place a player can actually
+  // cross between room 2 and room 6, matching the same pattern used for
+  // the room 3 <-> room 5 doorway
+  obstacles.push({minX:cx-GATE6_GAPHALF, maxX:cx+GATE6_GAPHALF, minZ:ROOM6_SOUTH_Z-1.0, maxZ:ROOM2_NORTH_Z+1.0, isRoomBound:true});
 }
 
 /* ---------------- room 6 shrine props ---------------- */

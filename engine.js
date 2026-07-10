@@ -6,7 +6,7 @@
    and the render loop.
    Loaded BEFORE the room1.js / room2.js / room3.js / room5.js /
    washroom1.js files, and BEFORE main.js.
-============================================================ */
+   ============================================================ */
 
 let scene, camera, renderer, clock;
 let yawObject, pitchObject;
@@ -19,7 +19,6 @@ const WIN_Z = -1.5, WIN_W = 1.4, WIN_H = 1.4, WIN_SILL = 0.9;
 const WIN_LINTEL = WIN_SILL + WIN_H;
 const DOOR_H = 2.1;
 const PLAYER_R = 0.4;
-
 const CORR_LEN = 2.0, CORR_W = 1.5, CORR_H = 2.3;
 
 const ROOM2_W = 5.6, ROOM2_D = 6.2, ROOM2_H = 3.05;
@@ -53,12 +52,12 @@ const ROOM4_EAST_X = -ROOM2_W/2; // shares room 2's own west wall
 const ROOM4_WEST_X = ROOM4_EAST_X - ROOM4_W;
 const ROOM4_CENTER_Z = ROOM2_CENTER_Z; // doorway centered on room 2's z-axis
 
-/* ---- room 5: opens DIRECTLY off room 3's east wall, no corridor ---- */
-const DOOR35_GAPHALF = CORR_W/2; // width of the doorway between room3 & room5
-const ROOM5_W = 5.0, ROOM5_D = 5.4, ROOM5_H = 3.0;
-const ROOM5_WEST_X = ROOM3_EAST_X; // shares room3's east wall plane
-const ROOM5_EAST_X = ROOM5_WEST_X + ROOM5_W;
-const ROOM5_CENTER_Z = ROOM3_CENTER_Z;
+/* ---- room 5: opens directly off room 3's east wall, no corridor ---- */
+const ROOM5_GAPHALF = CORR2_GAPHALF; // same doorway width language as the rest of the haveli
+const ROOM5_W = 4.6, ROOM5_D = 5.0, ROOM5_H = 3.0;
+const ROOM5_WEST_X = ROOM3_EAST_X;      // opens straight off room 3's east wall
+const ROOM5_EAST_X = ROOM5_WEST_X + ROOM5_D;
+const ROOM5_CENTER_Z = ROOM3_CENTER_Z;   // flush with room 3
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
 let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light;
@@ -550,6 +549,7 @@ function setupControls(){
     document.body.requestPointerLock();
     startAudio();
   });
+
   document.addEventListener('pointerlockchange', ()=>{
     if(document.pointerLockElement === document.body){
       overlay.style.opacity = 0; overlay.style.pointerEvents='none';
@@ -557,12 +557,14 @@ function setupControls(){
       overlay.style.opacity = 1; overlay.style.pointerEvents='auto';
     }
   });
+
   document.addEventListener('mousemove', (e)=>{
     if(document.pointerLockElement !== document.body) return;
     yawObject.rotation.y -= e.movementX * 0.0022;
     pitchObject.rotation.x -= e.movementY * 0.0022;
     pitchObject.rotation.x = Math.max(-1.3, Math.min(1.3, pitchObject.rotation.x));
   });
+
   document.addEventListener('keydown', (e)=>{
     switch(e.code){
       case 'KeyW': case 'ArrowUp': moveF=true; break;
@@ -571,6 +573,7 @@ function setupControls(){
       case 'KeyD': case 'ArrowRight': moveR=true; break;
     }
   });
+
   document.addEventListener('keyup', (e)=>{
     switch(e.code){
       case 'KeyW': case 'ArrowUp': moveF=false; break;
@@ -579,6 +582,7 @@ function setupControls(){
       case 'KeyD': case 'ArrowRight': moveR=false; break;
     }
   });
+
   // click to open/close whichever almirah drawer the player is looking at
   document.addEventListener('mousedown', (e)=>{
     if(document.pointerLockElement !== document.body) return;
@@ -631,6 +635,7 @@ function startAudio(){
 function tryMove(dx, dz){
   const newX = yawObject.position.x + dx;
   const newZ = yawObject.position.z + dz;
+
   // player must be inside at least one walkable zone (room1, the corridor,
   // room2, etc - each pushed as an isRoomBound entry). Zones are authored to
   // overlap slightly at doorways so movement between them is seamless.
@@ -640,6 +645,7 @@ function tryMove(dx, dz){
     newZ > z.minZ+PLAYER_R && newZ < z.maxZ-PLAYER_R
   );
   if(!inside) return;
+
   // block against furniture/pillars
   for(const o of obstacles){
     if(o.isRoomBound) continue;
@@ -647,6 +653,7 @@ function tryMove(dx, dz){
       return;
     }
   }
+
   yawObject.position.x = newX;
   yawObject.position.z = newZ;
 }
@@ -685,18 +692,17 @@ function animate(){
     const cFlicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
     corridorLight.intensity = 0.42 + Math.sin(t*2.1)*0.08 - cFlicker;
   }
+
   if(room2Light){
     const rFlicker = Math.random() < 0.025 ? Math.random()*0.35 : 0;
     room2Light.intensity = 0.7 + Math.sin(t*2.7+1.3)*0.1 - rFlicker;
   }
+
   if(windowShaft) windowShaft.material.opacity = 0.06 + Math.sin(t*0.5)*0.015;
+
   if(room4Light){
     const fFlicker = Math.random() < 0.04 ? Math.random()*0.25 : 0;
     room4Light.intensity = 0.55 + Math.sin(t*4.2)*0.09 - fFlicker;
-  }
-  if(room5Light){
-    const r5Flicker = Math.random() < 0.025 ? Math.random()*0.3 : 0;
-    room5Light.intensity = 0.75 + Math.sin(t*2.9+0.4)*0.1 - r5Flicker;
   }
 
   // bell sway

@@ -56,7 +56,7 @@ function init(){
   buildRoom6();
   buildRoom7();
   buildRoom8();
-  buildRoom9();
+
 
   window.addEventListener('resize', onResize);
   setupControls();

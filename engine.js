@@ -4,53 +4,64 @@
    texture generators used by more than one room, generic
    lighting helpers, player controls, movement/collision,
    and the render loop.
-   Loaded BEFORE the room1.js / room2.js / room3.js /
+   Loaded BEFORE the room1.js / room2.js / room3.js / room5.js /
    washroom1.js files, and BEFORE main.js.
-   ============================================================ */
+============================================================ */
 
 let scene, camera, renderer, clock;
 let yawObject, pitchObject;
 let moveF=false, moveB=false, moveL=false, moveR=false;
 let velocity = new THREE.Vector3();
 let obstacles = []; // {minX,maxX,minZ,maxZ}
+
 const ROOM_W = 6.4, ROOM_D = 7.6, ROOM_H = 3.2;
 const WIN_Z = -1.5, WIN_W = 1.4, WIN_H = 1.4, WIN_SILL = 0.9;
 const WIN_LINTEL = WIN_SILL + WIN_H;
 const DOOR_H = 2.1;
 const PLAYER_R = 0.4;
+
 const CORR_LEN = 2.0, CORR_W = 1.5, CORR_H = 2.3;
+
 const ROOM2_W = 5.6, ROOM2_D = 6.2, ROOM2_H = 3.05;
-const ROOM1_NORTH_Z = -ROOM_D/2;               // room 1's north wall (doorway) z
-const CORR_SOUTH_Z = ROOM1_NORTH_Z;            // corridor starts here
+
+const ROOM1_NORTH_Z = -ROOM_D/2; // room 1's north wall (doorway) z
+const CORR_SOUTH_Z = ROOM1_NORTH_Z; // corridor starts here
 const CORR_NORTH_Z = ROOM1_NORTH_Z - CORR_LEN; // corridor ends here
-const ROOM2_SOUTH_Z = CORR_NORTH_Z;            // room 2's south wall (doorway) z
+const ROOM2_SOUTH_Z = CORR_NORTH_Z; // room 2's south wall (doorway) z
 const ROOM2_NORTH_Z = ROOM2_SOUTH_Z - ROOM2_D; // room 2's back wall z
 
 /* ---- east branch: opens off room 2's east wall -> corridor2 -> room 3 ---- */
 const ROOM2_CENTER_Z = (ROOM2_SOUTH_Z + ROOM2_NORTH_Z)/2;
-const CORR2_GAPHALF = CORR_W/2;    // the gate opening matches the main corridor's width
-const CORR2_LEN = 2.8;             // how far east the branch travels (increased so room 3 clears room 2's wall comfortably)
+const CORR2_GAPHALF = CORR_W/2; // the gate opening matches the main corridor's width
+const CORR2_LEN = 2.8; // how far east the branch travels (increased so room 3 clears room 2's wall comfortably)
 const CORR2_H = 2.3;
 const CORR2_SOUTH_Z = ROOM2_CENTER_Z - CORR2_GAPHALF; // branch corridor's south wall z
 const CORR2_NORTH_Z = ROOM2_CENTER_Z + CORR2_GAPHALF; // branch corridor's north wall z
-const CORR2_WEST_X = ROOM2_W/2;                   // starts right at room 2's east wall
-const CORR2_EAST_X = CORR2_WEST_X + CORR2_LEN;    // ends here -> room 3's west doorway
+const CORR2_WEST_X = ROOM2_W/2; // starts right at room 2's east wall
+const CORR2_EAST_X = CORR2_WEST_X + CORR2_LEN; // ends here -> room 3's west doorway
 
 const ROOM3_W = 5.2, ROOM3_D = 5.6, ROOM3_H = 3.05;
-const ROOM3_WEST_X = CORR2_EAST_X;        // room 3's west wall (doorway) x
+const ROOM3_WEST_X = CORR2_EAST_X; // room 3's west wall (doorway) x
 const ROOM3_EAST_X = ROOM3_WEST_X + ROOM3_W;
-const ROOM3_CENTER_Z = ROOM2_CENTER_Z;     // exactly aligned with room 2, sitting flush beside it
+const ROOM3_CENTER_Z = ROOM2_CENTER_Z; // exactly aligned with room 2, sitting flush beside it
 
 /* ---- room 4: a cramped washroom opening directly off room 2's west wall,
    no corridor - deliberately the smallest room in the haveli so far ---- */
-const GATE4_GAPHALF = 0.6;                // narrower doorway than the other rooms
+const GATE4_GAPHALF = 0.6; // narrower doorway than the other rooms
 const ROOM4_W = 3.0, ROOM4_D = 3.0, ROOM4_H = 2.5;
-const ROOM4_EAST_X = -ROOM2_W/2;          // shares room 2's own west wall
+const ROOM4_EAST_X = -ROOM2_W/2; // shares room 2's own west wall
 const ROOM4_WEST_X = ROOM4_EAST_X - ROOM4_W;
-const ROOM4_CENTER_Z = ROOM2_CENTER_Z;    // doorway centered on room 2's z-axis
+const ROOM4_CENTER_Z = ROOM2_CENTER_Z; // doorway centered on room 2's z-axis
+
+/* ---- room 5: opens DIRECTLY off room 3's east wall, no corridor ---- */
+const DOOR35_GAPHALF = CORR_W/2; // width of the doorway between room3 & room5
+const ROOM5_W = 5.0, ROOM5_D = 5.4, ROOM5_H = 3.0;
+const ROOM5_WEST_X = ROOM3_EAST_X; // shares room3's east wall plane
+const ROOM5_EAST_X = ROOM5_WEST_X + ROOM5_W;
+const ROOM5_CENTER_Z = ROOM3_CENTER_Z;
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -62,12 +73,10 @@ raycaster.far = 3.2;
 const screenCenter = new THREE.Vector2(0,0);
 
 /* ---------------- procedural textures ---------------- */
-
 function makeCanvas(w,h){
   const c = document.createElement('canvas'); c.width=w; c.height=h;
   return c;
 }
-
 
 function wallTexture(){
   const S = 1024;
@@ -116,7 +125,6 @@ function wallTexture(){
   tex.anisotropy = maxAniso;
   return tex;
 }
-
 
 function floorTexture(){
   const S = 1024;
@@ -209,7 +217,6 @@ function floorTexture(){
   return tex;
 }
 
-
 function ceilingTexture(){
   const c = makeCanvas(256,256), ctx = c.getContext('2d');
   ctx.fillStyle='#241a12'; ctx.fillRect(0,0,256,256);
@@ -228,7 +235,6 @@ function ceilingTexture(){
   return tex;
 }
 
-
 function ropeTexture(){
   const c = makeCanvas(256,256), ctx = c.getContext('2d');
   ctx.fillStyle='#5a4128'; ctx.fillRect(0,0,256,256);
@@ -241,7 +247,6 @@ function ropeTexture(){
   }
   return new THREE.CanvasTexture(c);
 }
-
 
 function crackTexture(){
   const c = makeCanvas(256,256), ctx = c.getContext('2d');
@@ -264,7 +269,6 @@ function crackTexture(){
   ctx.strokeRect(4,4,248,248);
   return new THREE.CanvasTexture(c);
 }
-
 
 function cobwebTexture(){
   const c = makeCanvas(256,256), ctx=c.getContext('2d');
@@ -289,7 +293,6 @@ function cobwebTexture(){
   return new THREE.CanvasTexture(c);
 }
 
-
 function softDotTexture(){
   const c = makeCanvas(64,64), ctx=c.getContext('2d');
   const g = ctx.createRadialGradient(32,32,0,32,32,32);
@@ -297,7 +300,6 @@ function softDotTexture(){
   ctx.fillStyle=g; ctx.fillRect(0,0,64,64);
   return new THREE.CanvasTexture(c);
 }
-
 
 function bloodPoolTexture(tone){
   // an irregular pool with a wet or dried look depending on tone:
@@ -322,7 +324,6 @@ function bloodPoolTexture(tone){
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   }
   ctx.closePath();
-
   let centerColor, midColor, crustColor, highlightColor;
   if(tone==='dried'){
     centerColor='rgba(30,10,5,1)'; midColor='rgba(17,6,3,0.95)'; crustColor='rgba(11,4,2,0.85)'; highlightColor='rgba(45,16,8,0.05)';
@@ -331,18 +332,15 @@ function bloodPoolTexture(tone){
   } else {
     centerColor='rgba(5,0,0,1)'; midColor='rgba(2,0,0,0.98)'; crustColor='rgba(1,0,0,0.88)'; highlightColor='rgba(22,3,3,0.08)';
   }
-
   const g = ctx.createRadialGradient(0,0,4,0,0,S*radiusScale*1.2);
   g.addColorStop(0,centerColor);
   g.addColorStop(0.55,midColor);
   g.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle = g;
   ctx.fill();
-
   ctx.strokeStyle = crustColor;
   ctx.lineWidth = 2+Math.random()*2.5;
   ctx.stroke();
-
   const tendrils = 3+Math.floor(Math.random()*6);
   for(let i=0;i<tendrils;i++){
     const a = Math.random()*Math.PI*2;
@@ -356,7 +354,6 @@ function bloodPoolTexture(tone){
     ctx.lineTo(x,y);
     ctx.stroke();
   }
-
   if(tone!=='old'){
     const hi = ctx.createRadialGradient(-S*0.08,-S*0.08,2,-S*0.08,-S*0.08,S*0.12);
     hi.addColorStop(0,highlightColor); hi.addColorStop(1,'rgba(0,0,0,0)');
@@ -365,7 +362,6 @@ function bloodPoolTexture(tone){
   ctx.restore();
   return new THREE.CanvasTexture(c);
 }
-
 
 function bloodSplatterTexture(tone){
   // scattered droplets and thin spray lines, for splashes on walls/furniture
@@ -400,7 +396,6 @@ function bloodSplatterTexture(tone){
   return new THREE.CanvasTexture(c);
 }
 
-
 function bloodHandprintTexture(tone){
   // a smeared handprint - a palm blob plus five dragged finger streaks
   tone = tone || 'wet';
@@ -429,7 +424,6 @@ function bloodHandprintTexture(tone){
   ctx.restore();
   return new THREE.CanvasTexture(c);
 }
-
 
 function woodTexture(baseColor, darkColor){
   const S = 512;
@@ -468,7 +462,6 @@ function woodTexture(baseColor, darkColor){
 
 /* ---------------- almirah detail textures ---------------- */
 
-
 function buildLighting(){
   const amb = new THREE.AmbientLight(0x1a140d, 0.22);
   scene.add(amb);
@@ -478,7 +471,6 @@ function buildLighting(){
 }
 
 /* ---------------- shell ---------------- */
-
 
 function cobwebTextureVariant(density, tornAmount){
   // a variant cobweb generator with adjustable thread density and a
@@ -519,7 +511,6 @@ function cobwebTextureVariant(density, tornAmount){
   return new THREE.CanvasTexture(c);
 }
 
-
 function strandWebTexture(){
   // a thin, mostly-empty strand web for stretching across open gaps
   // (between furniture, across a beam, corner-to-corner) rather than a
@@ -547,13 +538,11 @@ function strandWebTexture(){
   return new THREE.CanvasTexture(c);
 }
 
-
 function boxFor(pos, hx, hz, pad){
   return {minX:pos.x-hx-pad, maxX:pos.x+hx+pad, minZ:pos.z-hz-pad, maxZ:pos.z+hz+pad};
 }
 
 /* ---------------- controls ---------------- */
-
 
 function setupControls(){
   const overlay = document.getElementById('overlay');
@@ -590,7 +579,6 @@ function setupControls(){
       case 'KeyD': case 'ArrowRight': moveR=false; break;
     }
   });
-
   // click to open/close whichever almirah drawer the player is looking at
   document.addEventListener('mousedown', (e)=>{
     if(document.pointerLockElement !== document.body) return;
@@ -616,7 +604,6 @@ function setupControls(){
   });
 }
 
-
 function startAudio(){
   if(audioCtx) return;
   try{
@@ -641,11 +628,9 @@ function startAudio(){
 
 /* ---------------- collision + movement ---------------- */
 
-
 function tryMove(dx, dz){
   const newX = yawObject.position.x + dx;
   const newZ = yawObject.position.z + dz;
-
   // player must be inside at least one walkable zone (room1, the corridor,
   // room2, etc - each pushed as an isRoomBound entry). Zones are authored to
   // overlap slightly at doorways so movement between them is seamless.
@@ -655,7 +640,6 @@ function tryMove(dx, dz){
     newZ > z.minZ+PLAYER_R && newZ < z.maxZ-PLAYER_R
   );
   if(!inside) return;
-
   // block against furniture/pillars
   for(const o of obstacles){
     if(o.isRoomBound) continue;
@@ -668,7 +652,6 @@ function tryMove(dx, dz){
 }
 
 /* ---------------- animate ---------------- */
-
 
 function animate(){
   requestAnimationFrame(animate);
@@ -707,10 +690,13 @@ function animate(){
     room2Light.intensity = 0.7 + Math.sin(t*2.7+1.3)*0.1 - rFlicker;
   }
   if(windowShaft) windowShaft.material.opacity = 0.06 + Math.sin(t*0.5)*0.015;
-
   if(room4Light){
     const fFlicker = Math.random() < 0.04 ? Math.random()*0.25 : 0;
     room4Light.intensity = 0.55 + Math.sin(t*4.2)*0.09 - fFlicker;
+  }
+  if(room5Light){
+    const r5Flicker = Math.random() < 0.025 ? Math.random()*0.3 : 0;
+    room5Light.intensity = 0.75 + Math.sin(t*2.9+0.4)*0.1 - r5Flicker;
   }
 
   // bell sway
@@ -780,7 +766,6 @@ function animate(){
 
   renderer.render(scene, camera);
 }
-
 
 function onResize(){
   camera.aspect = window.innerWidth/window.innerHeight;

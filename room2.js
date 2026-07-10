@@ -94,7 +94,7 @@ function buildRoom2(){
   const nGapHalf = GATE6_GAPHALF;
   const nSideW = (ROOM2_W/2) - nGapHalf;
   const nTex = wallTexture(); nTex.repeat.set(1.4,1.5);
-  const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02});
+  const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02, side:THREE.DoubleSide});
 
   const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM2_H), nMat);
   nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM2_H/2, ROOM2_NORTH_Z);

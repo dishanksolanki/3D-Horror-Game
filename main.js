@@ -54,11 +54,9 @@ function init(){
   buildRoom4();
 
   buildRoom6();
-  buildRoom6Furniture();
   buildRoom7();
-  buildRoom7Furniture();
   buildRoom8();
-  buildRoom8Furniture();
+  buildRoom9();
 
   window.addEventListener('resize', onResize);
   setupControls();

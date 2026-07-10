@@ -182,8 +182,14 @@ function buildRoom3(){
   fan(1.2, [ROOM3_EAST_X-0.05, ROOM3_H-0.04, cz-ROOM3_W/2+0.05], [0, Math.PI/4, 0], 7, 0.2);
   fan(1.1, [ROOM3_EAST_X-0.03, ROOM3_H-0.04, cz+ROOM3_W/2-0.05], [0, -Math.PI/4, 0], 6, 0.2);
 
-  // walkable zone — extended past the east wall so it overlaps room5's
-  // zone at the new doorway, exactly like the west-side doorway into
-  // corridor2 already does
-  obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X+1.0, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
+  // walkable zone — stops exactly at room3's real walls (including the
+  // east wall), so the solid wall panels flanking the room5 doorway
+  // properly block movement
+  obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
+
+  // a separate, narrow bridging zone spanning ONLY the doorway gap itself
+  // (not the whole wall) — this is what actually lets you walk from room3
+  // into room5, while the solid panels on either side of the gap remain
+  // impassable because no zone covers that X/Z combination
+  obstacles.push({minX:ROOM3_EAST_X-0.5, maxX:ROOM5_WEST_X+0.5, minZ:cz-gapHalfE, maxZ:cz+gapHalfE, isRoomBound:true});
 }

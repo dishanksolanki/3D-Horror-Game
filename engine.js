@@ -69,14 +69,14 @@ const ROOM6_NORTH_Z = ROOM6_SOUTH_Z - ROOM6_D; // room 6's back wall z
 
 /* ---- room 7: ordinary bedroom, opens off room 6's east wall ---- */
 const GATE7_GAPHALF = 0.6;
-const ROOM7_W = 3.6, ROOM7_D = 3.4, ROOM7_H = ROOM6_H;
+const ROOM7_W = 5.6, ROOM7_D = 5.2, ROOM7_H = ROOM6_H;
 const ROOM7_WEST_X = ROOM6_W/2; // shares room 6's own east wall
 const ROOM7_EAST_X = ROOM7_WEST_X + ROOM7_W;
 const ROOM7_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // aligned with room 6
 
 /* ---- room 8: storeroom, opens off room 6's west wall ---- */
 const GATE8_GAPHALF = 0.6;
-const ROOM8_W = 3.6, ROOM8_D = 3.4, ROOM8_H = ROOM6_H;
+const ROOM8_W = 5.6, ROOM8_D = 5.2, ROOM8_H = ROOM6_H;
 const ROOM8_EAST_X = -ROOM6_W/2; // shares room 6's own west wall
 const ROOM8_WEST_X = ROOM8_EAST_X - ROOM8_W;
 const ROOM8_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // aligned with room 6

@@ -645,12 +645,6 @@ function buildRoom2Furniture(){
   const crateB2 = makeCrate(0.4,0.34,0.4, [-1.75,0.55,-10.15], 0.25);
   obstacles.push(boxFor(new THREE.Vector3(-1.65,0,-10.25), 0.4, 0.4, 0.1));
 
-  // loose scattered single crates elsewhere for clutter
-  makeCrate(0.42,0.32,0.4, [-0.9,0.16,-10.2], 0.4);
-  makeCrate(0.36,0.28,0.34, [0.7,0.14,-11.1], -0.35);
-  obstacles.push(boxFor(new THREE.Vector3(-0.9,0,-10.2), 0.3, 0.3, 0.08));
-  obstacles.push(boxFor(new THREE.Vector3(0.7,0,-11.1), 0.25, 0.25, 0.08));
-
   // --- grain sack pile against the east wall, near the entrance ---
   makeSack(1.0, [2.05,0,-6.55], 0.2);
   makeSack(0.9, [2.35,0,-6.75], -0.4);

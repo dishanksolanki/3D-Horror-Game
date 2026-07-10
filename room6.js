@@ -16,14 +16,7 @@ the other three walls, floor, ceiling, and furniture).
    of the wall it builds for that doorway, and set ROOM6_SOUTH_Z to that
    exact value so the two rooms line up. Until then this uses a
    placeholder that keeps the room from overlapping anything else. */
-const ROOM6_W = 3.6;
-const ROOM6_D = 3.4;
-const ROOM6_H = ROOM_H;
-const ROOM6_NORTH_Z = -14;
-const ROOM6_SOUTH_Z = ROOM6_NORTH_Z + ROOM6_D; // <-- align to room2's north wall Z
 
-const GATE7_GAPHALF = 0.6;
-const GATE8_GAPHALF = 0.6;
 
 function buildRoom6(){
   const cx = 0;

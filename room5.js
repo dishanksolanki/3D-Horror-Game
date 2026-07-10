@@ -4,12 +4,11 @@
    The doorway itself lives in room3.js's east wall — this file just
    builds the room shell on the other side of that opening.
    Requires engine.js and room3.js to be loaded first.
-============================================================ */
+   ============================================================ */
 
 function buildRoom5(){
   const cz = ROOM5_CENTER_Z;
   const centerX = (ROOM5_WEST_X + ROOM5_EAST_X)/2;
-
   const wTex = wallTexture(); wTex.repeat.set(4, 1.5);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
@@ -42,9 +41,9 @@ function buildRoom5(){
   southWall.rotation.y = Math.PI;
   scene.add(southWall);
 
-  // NOTE: no west wall here on purpose — room3.js already cut the
-  // doorway into its own east wall at ROOM3_EAST_X === ROOM5_WEST_X,
-  // so the two rooms open straight into each other.
+  // NOTE: no west wall here on purpose — room3.js cuts the doorway into
+  // its own east wall at ROOM3_EAST_X === ROOM5_WEST_X, so the two rooms
+  // open straight into each other.
 
   // baseboard trim
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
@@ -80,8 +79,8 @@ function buildRoom5(){
   pool.position.set(centerX+0.6, 0.01, cz+0.4);
   scene.add(pool);
 
-  // walkable zone - stops exactly at the wall on every side; crossing back
-  // into room 3 happens through the narrow bridge zone room3.js adds at
-  // the doorway itself
-  obstacles.push({minX:ROOM5_WEST_X, maxX:ROOM5_EAST_X, minZ:cz-ROOM5_W/2, maxZ:cz+ROOM5_W/2, isRoomBound:true});
+  // walkable zone — extended back past the west opening so it overlaps
+  // room3's zone at the doorway (room3's zone was extended the same way),
+  // which is what makes crossing between the two rooms seamless
+  obstacles.push({minX:ROOM5_WEST_X-1.0, maxX:ROOM5_EAST_X, minZ:cz-ROOM5_W/2, maxZ:cz+ROOM5_W/2, isRoomBound:true});
 }

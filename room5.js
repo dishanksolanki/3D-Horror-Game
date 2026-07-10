@@ -79,8 +79,10 @@ function buildRoom5(){
   pool.position.set(centerX+0.6, 0.01, cz+0.4);
   scene.add(pool);
 
-  // walkable zone — extended back past the west opening so it overlaps
-  // room3's zone at the doorway (room3's zone was extended the same way),
-  // which is what makes crossing between the two rooms seamless
-  obstacles.push({minX:ROOM5_WEST_X-1.0, maxX:ROOM5_EAST_X, minZ:cz-ROOM5_W/2, maxZ:cz+ROOM5_W/2, isRoomBound:true});
+  // walkable zone — stops exactly at room5's real boundary. Crossing
+  // through the doorway from room3 is handled by the narrow bridging
+  // zone added in room3.js, which covers only the gap width, not the
+  // whole wall — so the solid wall on either side of the door still
+  // blocks the player and blocks camera clipping through it.
+  obstacles.push({minX:ROOM5_WEST_X, maxX:ROOM5_EAST_X, minZ:cz-ROOM5_W/2, maxZ:cz+ROOM5_W/2, isRoomBound:true});
 }

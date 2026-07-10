@@ -38,10 +38,24 @@ function buildRoom6(){
   ceil.position.set(cx, ROOM6_H, centerZ);
   scene.add(ceil);
 
-  // north wall - solid, backs the shrine altar
-  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM6_W, ROOM6_H), wallMat);
-  northWall.position.set(cx, ROOM6_H/2, ROOM6_NORTH_Z);
-  scene.add(northWall);
+  // north wall - doorway through to room 9 (the hall)
+  const nGapHalf = GATE9_GAPHALF;
+  const nSideW = (ROOM6_W/2) - nGapHalf;
+  const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM6_H), wallMat.clone());
+  nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM6_H/2, ROOM6_NORTH_Z);
+  scene.add(nLeftPanel);
+  const nRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM6_H), wallMat.clone());
+  nRightPanel.position.set(cx+(nGapHalf+nSideW/2), ROOM6_H/2, ROOM6_NORTH_Z);
+  scene.add(nRightPanel);
+  const nLintel = new THREE.Mesh(new THREE.PlaneGeometry(nGapHalf*2+0.3, ROOM6_H-DOOR_H), wallMat.clone());
+  nLintel.position.set(cx, DOOR_H+(ROOM6_H-DOOR_H)/2, ROOM6_NORTH_Z);
+  scene.add(nLintel);
+  const nFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const nFrameSide = new THREE.BoxGeometry(0.24, DOOR_H+0.1, 0.16);
+  const n9fl = new THREE.Mesh(nFrameSide, nFrameMat); n9fl.position.set(cx-nGapHalf-0.1, DOOR_H/2+0.05, ROOM6_NORTH_Z);
+  const n9fr = new THREE.Mesh(nFrameSide, nFrameMat); n9fr.position.set(cx+nGapHalf+0.1, DOOR_H/2+0.05, ROOM6_NORTH_Z);
+  const n9ft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); n9ft.position.set(cx, DOOR_H+0.1, ROOM6_NORTH_Z);
+  scene.add(n9fl, n9fr, n9ft);
 
   // east wall - doorway through to room 7
   const eastSpan = (ROOM6_D - GATE7_GAPHALF*2)/2;
@@ -116,6 +130,9 @@ function buildRoom6(){
 
   // doorway bridge -> room 8 (west wall gap only)
   obstacles.push({minX:ROOM8_EAST_X-1.0, maxX:ROOM8_EAST_X+1.0, minZ:ROOM8_CENTER_Z-GATE8_GAPHALF, maxZ:ROOM8_CENTER_Z+GATE8_GAPHALF, isRoomBound:true});
+
+  // doorway bridge -> room 9 (north wall gap only)
+  obstacles.push({minX:cx-GATE9_GAPHALF, maxX:cx+GATE9_GAPHALF, minZ:ROOM6_NORTH_Z-1.0, maxZ:ROOM6_NORTH_Z+1.0, isRoomBound:true});
 }
 
 /* ---------------- room 6 shrine props ---------------- */

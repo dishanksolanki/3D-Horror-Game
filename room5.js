@@ -80,5 +80,8 @@ function buildRoom5(){
   pool.position.set(centerX+0.6, 0.01, cz+0.4);
   scene.add(pool);
 
-  obstacles.push({minX:ROOM5_WEST_X-1.0, maxX:ROOM5_EAST_X, minZ:cz-ROOM5_W/2, maxZ:cz+ROOM5_W/2, isRoomBound:true});
+  // walkable zone - stops exactly at the wall on every side; crossing back
+  // into room 3 happens through the narrow bridge zone room3.js adds at
+  // the doorway itself
+  obstacles.push({minX:ROOM5_WEST_X, maxX:ROOM5_EAST_X, minZ:cz-ROOM5_W/2, maxZ:cz+ROOM5_W/2, isRoomBound:true});
 }

@@ -2,20 +2,13 @@
 HAVELI OF SHADOWS — ROOM 6 (the ancestor's shrine)
 Opens directly off room 2's north wall - no corridor, the
 doorway sits right in the wall the shrine shares with room 2.
-Also opens east into room 7 and west into room 8.
+Also opens east into room 7 and west into room 8, and north
+into a short 2-metre corridor (built here as buildCorridor9())
+that leads on to room 9's own south wall.
 Requires engine.js and room2.js to be loaded first (room2.js
 builds the shared doorway wall; this file only needs to add
 the other three walls, floor, ceiling, and furniture).
 ============================================================ */
-
-/* NOTE: ROOM6_* were referenced in the original room6.js but never
-   actually defined anywhere in the wired-up files (engine.js, room1.js,
-   room2.js, room3.js, washroom1.js). Defining them here so the file
-   works standalone. ROOM6_SOUTH_Z is meant to sit exactly on room 2's
-   north wall (the shared doorway) - open room2.js, find the Z position
-   of the wall it builds for that doorway, and set ROOM6_SOUTH_Z to that
-   exact value so the two rooms line up. Until then this uses a
-   placeholder that keeps the room from overlapping anything else. */
 
 
 function buildRoom6(){
@@ -38,12 +31,11 @@ function buildRoom6(){
   ceil.position.set(cx, ROOM6_H, centerZ);
   scene.add(ceil);
 
-  // north wall - doorway through to room 9 (the hall). Room 9 is wider
-  // than room 6 (ROOM9_W > ROOM6_W) but shares the same centerline, so
-  // this wall has to be sized off ROOM9_W or it leaves room 9's south
-  // wall unsealed past room 6's narrower footprint.
+  // north wall - doorway through to corridor 9, which leads on to room 9
+  // (the hall). The wall only needs to seal room 6's own width now, since
+  // room 9 sits two metres further north on the far side of the corridor.
   const nGapHalf = GATE9_GAPHALF;
-  const nSideW = (ROOM9_W/2) - nGapHalf;
+  const nSideW = (ROOM6_W/2) - nGapHalf;
   const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM6_H), wallMat.clone());
   nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM6_H/2, ROOM6_NORTH_Z);
   scene.add(nLeftPanel);
@@ -105,7 +97,7 @@ function buildRoom6(){
   // matching the wider/deeper wall panels above so the baseboard doesn't
   // stop short of the actual wall
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM9_W,0.15,0.1), trimMat);
+  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM6_W,0.15,0.1), trimMat);
   trimN.position.set(cx,0.08,ROOM6_NORTH_Z); scene.add(trimN);
   const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM7_D), trimMat);
   trimE.position.set(cx+ROOM6_W/2,0.08,centerZ); scene.add(trimE);

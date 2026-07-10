@@ -104,7 +104,18 @@ function buildRoom6(){
 
   // walkable zone, overlapping south into room 2, east into room 7, and
   // west into room 8 so all three shared doorways feel seamless
-  obstacles.push({minX:cx-ROOM6_W/2-1.0, maxX:cx+ROOM6_W/2+1.0, minZ:ROOM6_NORTH_Z, maxZ:ROOM6_SOUTH_Z+1.0, isRoomBound:true});
+  // room 6's own footprint - tight fit against its own walls, no padding,
+  // so solid wall stretches actually block movement
+  obstacles.push({minX:cx-ROOM6_W/2, maxX:cx+ROOM6_W/2, minZ:ROOM6_NORTH_Z, maxZ:ROOM6_SOUTH_Z, isRoomBound:true});
+
+  // doorway bridge -> room 2 (south wall gap only)
+  obstacles.push({minX:cx-GATE6_GAPHALF, maxX:cx+GATE6_GAPHALF, minZ:ROOM6_SOUTH_Z-1.0, maxZ:ROOM6_SOUTH_Z+1.0, isRoomBound:true});
+
+  // doorway bridge -> room 7 (east wall gap only)
+  obstacles.push({minX:ROOM7_WEST_X-1.0, maxX:ROOM7_WEST_X+1.0, minZ:ROOM7_CENTER_Z-GATE7_GAPHALF, maxZ:ROOM7_CENTER_Z+GATE7_GAPHALF, isRoomBound:true});
+
+  // doorway bridge -> room 8 (west wall gap only)
+  obstacles.push({minX:ROOM8_EAST_X-1.0, maxX:ROOM8_EAST_X+1.0, minZ:ROOM8_CENTER_Z-GATE8_GAPHALF, maxZ:ROOM8_CENTER_Z+GATE8_GAPHALF, isRoomBound:true});
 }
 
 /* ---------------- room 6 shrine props ---------------- */

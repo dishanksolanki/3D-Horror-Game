@@ -9,7 +9,6 @@ function buildCorridor(){
   // doorway, aligned to the same width as the doorway gap so the frame
   // reads as one continuous opening.
   const centerZ = (CORR_SOUTH_Z + CORR_NORTH_Z)/2;
-
   const wTex = wallTexture(); wTex.repeat.set(1, 1.3);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
@@ -68,14 +67,11 @@ function buildCorridor(){
 }
 
 /* ---------------- east branch: corridor2 + room 3 ---------------- */
-
-
 function buildRoom2(){
   // room 2: a second haveli chamber beyond the corridor. Shell built with the
   // same materials/language as room 1 - furniture and detailing to follow.
   const cx = 0;
   const centerZ = (ROOM2_SOUTH_Z + ROOM2_NORTH_Z)/2;
-
   const wTex = wallTexture(); wTex.repeat.set(4, 1.5);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
@@ -92,10 +88,33 @@ function buildRoom2(){
   ceil.position.set(cx, ROOM2_H, centerZ);
   scene.add(ceil);
 
-  // north (back) wall - solid dead-end for now, future rooms can open through it
-  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM2_W, ROOM2_H), wallMat);
-  backWall.position.set(cx, ROOM2_H/2, ROOM2_NORTH_Z);
-  scene.add(backWall);
+  // north (back) wall - now opens into room 6, the small ancestral shrine.
+  // Built with a doorway gap in the same panel+lintel+frame style used
+  // for every other doorway in the haveli, instead of the old solid slab.
+  const nGapHalf = GATE6_GAPHALF;
+  const nSideW = (ROOM2_W/2) - nGapHalf;
+  const nTex = wallTexture(); nTex.repeat.set(1.4,1.5);
+  const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02});
+
+  const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM2_H), nMat);
+  nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM2_H/2, ROOM2_NORTH_Z);
+  scene.add(nLeftPanel);
+
+  const nRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM2_H), nMat.clone());
+  nRightPanel.position.set(cx+(nGapHalf+nSideW/2), ROOM2_H/2, ROOM2_NORTH_Z);
+  scene.add(nRightPanel);
+
+  const nDoorH = DOOR_H*0.85; // a slightly lower, older doorway befitting a shrine
+  const nLintel = new THREE.Mesh(new THREE.PlaneGeometry(nGapHalf*2+0.4, ROOM2_H-nDoorH), nMat.clone());
+  nLintel.position.set(cx, nDoorH+(ROOM2_H-nDoorH)/2, ROOM2_NORTH_Z);
+  scene.add(nLintel);
+
+  const nFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const nFrameSide = new THREE.BoxGeometry(0.2, nDoorH+0.1, 0.3);
+  const nfl = new THREE.Mesh(nFrameSide, nFrameMat); nfl.position.set(cx-nGapHalf-0.1, nDoorH/2+0.05, ROOM2_NORTH_Z);
+  const nfr = new THREE.Mesh(nFrameSide, nFrameMat); nfr.position.set(cx+nGapHalf+0.1, nDoorH/2+0.05, ROOM2_NORTH_Z);
+  const nft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.4, 0.18, 0.3), nFrameMat); nft.position.set(cx, nDoorH+0.1, ROOM2_NORTH_Z);
+  scene.add(nfl,nfr,nft);
 
   // east wall carries a doorway gap -> corridor2 -> room 3, matching the
   // panel+lintel+frame pattern used for every other doorway in the haveli
@@ -186,10 +205,13 @@ function buildRoom2(){
   const ft = new THREE.Mesh(new THREE.BoxGeometry(gapHalf*2+0.36, 0.18, 0.3), frameMat); ft.position.set(cx,DOOR_H+0.1,ROOM2_SOUTH_Z);
   scene.add(fl,fr,ft);
 
-  // baseboard trim
+  // baseboard trim - north wall trim is now split either side of the new
+  // room 6 doorway instead of running solid across the whole wall
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM2_W,0.15,0.1), trimMat);
-  trimN.position.set(cx,0.08,ROOM2_NORTH_Z); scene.add(trimN);
+  const trimNL = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM2_NORTH_Z); scene.add(trimNL);
+  const trimNR = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNR.position.set(cx+(nGapHalf+nSideW/2),0.08,ROOM2_NORTH_Z); scene.add(trimNR);
 
   // a single weak bulb so the room isn't pure black while it's still empty -
   // furniture and proper lighting design will follow in a later pass
@@ -214,7 +236,6 @@ function buildRoom2(){
 }
 
 /* ---------------- room 2 storage props ---------------- */
-
 
 function terracottaTexture(){
   const S = 256;
@@ -255,7 +276,6 @@ function terracottaTexture(){
   return tex;
 }
 
-
 function burlapTexture(){
   const S = 256;
   const c = makeCanvas(S,S), ctx = c.getContext('2d');
@@ -287,7 +307,6 @@ function burlapTexture(){
   return tex;
 }
 
-
 function strawTexture(){
   const c = makeCanvas(256,256), ctx = c.getContext('2d');
   ctx.clearRect(0,0,256,256);
@@ -304,7 +323,6 @@ function strawTexture(){
   }
   return new THREE.CanvasTexture(c);
 }
-
 
 function rustyMetalTexture(){
   const S=256;
@@ -323,7 +341,6 @@ function rustyMetalTexture(){
   return new THREE.CanvasTexture(c);
 }
 
-
 function makeCrate(w,h,d,pos,rotY){
   const group = new THREE.Group();
   const crateTex = almirahWoodTexture('#5e4326', null, {planks:3, knots:1});
@@ -332,7 +349,6 @@ function makeCrate(w,h,d,pos,rotY){
   const box = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
   box.castShadow = true; box.receiveShadow = true;
   group.add(box);
-
   const edgeMat = new THREE.MeshStandardMaterial({color:0x1c1108, roughness:0.85});
   const postGeo = new THREE.BoxGeometry(0.03,h+0.015,0.03);
   [[-w/2+0.015,-d/2+0.015],[w/2-0.015,-d/2+0.015],[-w/2+0.015,d/2-0.015],[w/2-0.015,d/2-0.015]].forEach(([x,z])=>{
@@ -345,13 +361,11 @@ function makeCrate(w,h,d,pos,rotY){
     band.position.set(0,y,0);
     group.add(band);
   });
-
   group.position.set(...pos);
   if(rotY) group.rotation.y = rotY;
   scene.add(group);
   return {group, w, h, d};
 }
-
 
 function makeSack(scale, pos, rotY){
   const group = new THREE.Group();
@@ -363,23 +377,19 @@ function makeSack(scale, pos, rotY){
   body.position.y = r*0.8;
   body.castShadow = true;
   group.add(body);
-
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(r*0.28,r*0.42,r*0.5,8), mat);
   neck.position.y = r*0.8 + r*0.8*0.55;
   group.add(neck);
-
   const tieMat = new THREE.MeshStandardMaterial({color:0x2a2015, roughness:0.85});
   const tie = new THREE.Mesh(new THREE.TorusGeometry(r*0.3,0.012,6,12), tieMat);
   tie.rotation.x = Math.PI/2;
   tie.position.y = neck.position.y + r*0.16;
   group.add(tie);
-
   group.position.set(...pos);
   if(rotY) group.rotation.y = rotY;
   scene.add(group);
   return group;
 }
-
 
 function makePot(scale, pos){
   const group = new THREE.Group();
@@ -391,21 +401,17 @@ function makePot(scale, pos){
   body.position.y = r*0.86;
   body.castShadow = true;
   group.add(body);
-
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(r*0.34,r*0.56,r*0.55,12), mat);
   neck.position.y = body.position.y + r*0.92*0.72;
   group.add(neck);
-
   const rim = new THREE.Mesh(new THREE.TorusGeometry(r*0.34,0.018*scale,8,16), mat);
   rim.rotation.x = Math.PI/2;
   rim.position.y = neck.position.y + r*0.26;
   group.add(rim);
-
   group.position.set(...pos);
   scene.add(group);
   return group;
 }
-
 
 function makeLadder(len, pos, rotY, leanAngle){
   const group = new THREE.Group();
@@ -427,7 +433,6 @@ function makeLadder(len, pos, rotY, leanAngle){
   scene.add(group);
   return group;
 }
-
 
 function makeCartWheel(radius, pos, rotY, rotZ){
   const group = new THREE.Group();
@@ -451,7 +456,6 @@ function makeCartWheel(radius, pos, rotY, rotZ){
   scene.add(group);
   return group;
 }
-
 
 function makeHangingLantern(pos){
   const group = new THREE.Group();
@@ -479,7 +483,6 @@ function makeHangingLantern(pos){
   return {group, light};
 }
 
-
 function makeRopeCoil(radius, pos){
   const mat = new THREE.MeshStandardMaterial({map:ropeTexture(), roughness:0.95});
   const group = new THREE.Group();
@@ -494,7 +497,6 @@ function makeRopeCoil(radius, pos){
   return group;
 }
 
-
 function makeStrawPatch(size, pos, rot){
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size,size*0.7),
     new THREE.MeshBasicMaterial({map:strawTexture(), transparent:true, depthWrite:false}));
@@ -504,7 +506,6 @@ function makeStrawPatch(size, pos, rot){
   scene.add(mesh);
   return mesh;
 }
-
 
 function makeShelvingUnit(w, h, d, pos, rotY){
   const group = new THREE.Group();
@@ -531,7 +532,6 @@ function makeShelvingUnit(w, h, d, pos, rotY){
   return group;
 }
 
-
 function makeOldTable(w,h,d,pos,rotY){
   const group = new THREE.Group();
   const woodTex = almirahWoodTexture('#3f2a17', null, {planks:2, knots:1});
@@ -552,7 +552,6 @@ function makeOldTable(w,h,d,pos,rotY){
   return group;
 }
 
-
 function makeGlassJar(scale, pos){
   const group = new THREE.Group();
   const mat = new THREE.MeshPhysicalMaterial({color:0x7a8f6a, transparent:true, opacity:0.35, roughness:0.15, metalness:0.05});
@@ -568,7 +567,6 @@ function makeGlassJar(scale, pos){
   return group;
 }
 
-
 function makeOpenableBox(w,h,d,pos,rotY){
   // an old wooden storage chest with a hinged lid the player can click to
   // open/close, like the almirah drawers but rotating instead of sliding
@@ -577,20 +575,17 @@ function makeOpenableBox(w,h,d,pos,rotY){
   woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
   const mat = new THREE.MeshStandardMaterial({map:woodTex, roughness:0.85, metalness:0.03});
   const bracketMat = new THREE.MeshStandardMaterial({map:agedBrassTexture(), metalness:0.75, roughness:0.4});
-
   const bodyH = h*0.72;
   const body = new THREE.Mesh(new THREE.BoxGeometry(w,bodyH,d), mat);
   body.position.y = bodyH/2;
   body.castShadow = true; body.receiveShadow = true;
   group.add(body);
-
   // an inner dark cavity visible once the lid lifts, so it isn't just a
   // solid block underneath
   const cavity = new THREE.Mesh(new THREE.BoxGeometry(w-0.04, bodyH-0.03, d-0.04),
     new THREE.MeshStandardMaterial({color:0x0c0805, roughness:1}));
   cavity.position.y = bodyH/2 + 0.008;
   group.add(cavity);
-
   // corner brackets and a banded strap around the body for a reinforced,
   // well-travelled storage-chest look
   const cornerGeo = new THREE.BoxGeometry(0.03, bodyH+0.01, 0.03);
@@ -602,22 +597,18 @@ function makeOpenableBox(w,h,d,pos,rotY){
   const strap = new THREE.Mesh(new THREE.BoxGeometry(w+0.015, 0.035, d+0.015), bracketMat);
   strap.position.y = bodyH*0.55;
   group.add(strap);
-
   // lid, hinged at the back top edge
   const lidH = h*0.24;
   const hingePivot = new THREE.Object3D();
   hingePivot.position.set(0, bodyH, -d/2);
   group.add(hingePivot);
-
   const lid = new THREE.Mesh(new THREE.BoxGeometry(w+0.02, lidH, d+0.02), mat);
   lid.position.set(0, lidH/2, d/2);
   lid.castShadow = true;
   hingePivot.add(lid);
-
   const lidTrim = new THREE.Mesh(new THREE.BoxGeometry(w+0.03, 0.02, d+0.03), bracketMat);
   lidTrim.position.set(0, lidH, d/2);
   hingePivot.add(lidTrim);
-
   // a small brass clasp/latch on the front, above the body
   const clasp = new THREE.Mesh(new THREE.BoxGeometry(0.07,0.06,0.02), bracketMat);
   clasp.position.set(0, bodyH-0.015, d/2+0.015);
@@ -625,31 +616,25 @@ function makeOpenableBox(w,h,d,pos,rotY){
   const claspRing = new THREE.Mesh(new THREE.TorusGeometry(0.02,0.006,6,12), bracketMat);
   claspRing.position.set(0, bodyH-0.015, d/2+0.03);
   group.add(claspRing);
-
   group.position.set(...pos);
   if(rotY) group.rotation.y = rotY;
   scene.add(group);
-
   const idx = roomBoxes.length;
   lid.userData.boxIndex = idx;
   body.userData.boxIndex = idx;
   clasp.userData.boxIndex = idx;
   claspRing.userData.boxIndex = idx;
-
   roomBoxes.push({
     hingePivot, lid, body, clasp, claspRing,
     isOpen: false,
     current: 0,
     openAngle: -Math.PI*0.6
   });
-
   return group;
 }
 
-
 function buildRoom2Furniture(){
   const cx = 0;
-
   // --- crate stacks against the west wall ---
   const crateA1 = makeCrate(0.55,0.4,0.5, [-2.15,0.2,-6.6], 0.1);
   const crateA2 = makeCrate(0.45,0.35,0.42, [-2.05,0.575,-6.75], -0.15);

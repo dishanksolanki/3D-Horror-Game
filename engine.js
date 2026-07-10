@@ -51,6 +51,14 @@ const ROOM4_EAST_X = -ROOM2_W/2; // shares room 2's own west wall
 const ROOM4_WEST_X = ROOM4_EAST_X - ROOM4_W;
 const ROOM4_CENTER_Z = ROOM2_CENTER_Z; // doorway centered on room 2's z-axis
 
+/* ---- room 5: opens directly off room 3's east wall, no corridor in
+   between - straight-through doorway aligned with room 3's own z-axis ---- */
+const ROOM5_GAPHALF = 0.75;
+const ROOM5_D = 4.6, ROOM5_W = 4.0, ROOM5_H = 2.95; // D = x-extent (width), W = z-extent (depth)
+const ROOM5_WEST_X = ROOM3_EAST_X; // shares room 3's own east wall
+const ROOM5_EAST_X = ROOM5_WEST_X + ROOM5_D;
+const ROOM5_CENTER_Z = ROOM3_CENTER_Z; // straight-through alignment with room 3
+
 /* ---- room 6: a small ancestral shrine opening directly off room 2's
    north (back) wall - the "future rooms can open through it" dead-end
    from room 2's shell finally opens up here ---- */
@@ -60,7 +68,7 @@ const ROOM6_SOUTH_Z = ROOM2_NORTH_Z; // shares room 2's own north wall
 const ROOM6_NORTH_Z = ROOM6_SOUTH_Z - ROOM6_D; // room 6's back wall z
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room6Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -696,6 +704,11 @@ function animate(){
   if(room4Light){
     const fFlicker = Math.random() < 0.04 ? Math.random()*0.25 : 0;
     room4Light.intensity = 0.55 + Math.sin(t*4.2)*0.09 - fFlicker;
+  }
+
+  if(room5Light){
+    const r5Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    room5Light.intensity = 0.75 + Math.sin(t*3.0)*0.1 - r5Flicker;
   }
 
   if(room6Light){

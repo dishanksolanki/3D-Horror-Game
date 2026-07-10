@@ -23,7 +23,7 @@ function buildRoom6(){
   const centerZ = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2;
 
   const wTex = wallTexture(); wTex.repeat.set(3, 1.4);
-  const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
+  const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02, side:THREE.DoubleSide});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
   const ceilMat = new THREE.MeshStandardMaterial({map:ceilingTexture(), roughness:1});
 

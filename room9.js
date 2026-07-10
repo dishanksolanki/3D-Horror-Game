@@ -75,10 +75,30 @@ function buildRoom9(){
   westWall.rotation.y = Math.PI/2;
   scene.add(westWall);
 
-  // note: the south wall (the doorway back into room 6) is built once, by
-  // buildRoom6() in room6.js, so it isn't duplicated here.
+  // south wall - now a real wall of room 9's own, with a doorway gap onto
+  // corridor9 (the short passage back to room 6). Previously this side was
+  // left open since room 6 and room 9 shared a wall directly; now that a
+  // 2-metre corridor sits between them, room 9 needs to seal its own end.
+  const sGapHalf = CORR9_GAPHALF;
+  const sSideW = (ROOM9_W/2) - sGapHalf;
+  const sLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(sSideW, ROOM9_H), wallMat.clone());
+  sLeftPanel.position.set(cx-(sGapHalf+sSideW/2), ROOM9_H/2, ROOM9_SOUTH_Z);
+  scene.add(sLeftPanel);
+  const sRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(sSideW, ROOM9_H), wallMat.clone());
+  sRightPanel.position.set(cx+(sGapHalf+sSideW/2), ROOM9_H/2, ROOM9_SOUTH_Z);
+  scene.add(sRightPanel);
+  const sLintel = new THREE.Mesh(new THREE.PlaneGeometry(sGapHalf*2+0.3, ROOM9_H-DOOR_H), wallMat.clone());
+  sLintel.position.set(cx, DOOR_H+(ROOM9_H-DOOR_H)/2, ROOM9_SOUTH_Z);
+  scene.add(sLintel);
+  const sFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const sFrameSide = new THREE.BoxGeometry(0.24, DOOR_H+0.1, 0.16);
+  const s9fl = new THREE.Mesh(sFrameSide, sFrameMat); s9fl.position.set(cx-sGapHalf-0.1, DOOR_H/2+0.05, ROOM9_SOUTH_Z);
+  const s9fr = new THREE.Mesh(sFrameSide, sFrameMat); s9fr.position.set(cx+sGapHalf+0.1, DOOR_H/2+0.05, ROOM9_SOUTH_Z);
+  const s9ft = new THREE.Mesh(new THREE.BoxGeometry(sGapHalf*2+0.32, 0.18, 0.3), sFrameMat); s9ft.position.set(cx, DOOR_H+0.1, ROOM9_SOUTH_Z);
+  scene.add(s9fl, s9fr, s9ft);
 
-  // baseboard trim along the solid walls
+  // baseboard trim along the solid walls, including the solid stretches
+  // either side of the new south doorway
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
   const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM9_W,0.15,0.1), trimMat);
   trimN.position.set(cx,0.08,ROOM9_NORTH_Z); scene.add(trimN);
@@ -86,6 +106,10 @@ function buildRoom9(){
   trimE.position.set(cx+ROOM9_W/2,0.08,centerZ); scene.add(trimE);
   const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM9_D), trimMat);
   trimW.position.set(cx-ROOM9_W/2,0.08,centerZ); scene.add(trimW);
+  const trimSL = new THREE.Mesh(new THREE.BoxGeometry(sSideW,0.15,0.1), trimMat);
+  trimSL.position.set(cx-(sGapHalf+sSideW/2),0.08,ROOM9_SOUTH_Z); scene.add(trimSL);
+  const trimSR = new THREE.Mesh(new THREE.BoxGeometry(sSideW,0.15,0.1), trimMat);
+  trimSR.position.set(cx+(sGapHalf+sSideW/2),0.08,ROOM9_SOUTH_Z); scene.add(trimSR);
 
   /* ---------------- structural stone pillars (not furniture) ---------------- */
   const pillarMat = new THREE.MeshStandardMaterial({color:0x3a3228, roughness:0.9});

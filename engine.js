@@ -81,6 +81,12 @@ const ROOM8_EAST_X = -ROOM6_W/2; // shares room 6's own west wall
 const ROOM8_WEST_X = ROOM8_EAST_X - ROOM8_W;
 const ROOM8_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // aligned with room 6
 
+/* ---- room 9: a grand hall opening off room 6's north wall ---- */
+const GATE9_GAPHALF = 1.0; // wide, grand doorway befitting a hall
+const ROOM9_W = 7.0, ROOM9_D = 9.0, ROOM9_H = 3.4;
+const ROOM9_SOUTH_Z = ROOM6_NORTH_Z; // shares room 6's own north wall
+const ROOM9_NORTH_Z = ROOM9_SOUTH_Z - ROOM9_D;
+
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
 let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light;
 let moonSpot, windowShaft;

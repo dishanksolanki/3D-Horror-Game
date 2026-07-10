@@ -49,6 +49,7 @@ function init(){
   buildRoom2Furniture();
   buildCorridor2();
   buildRoom3();
+  buildRoom5();
   buildRoom4();
   buildRoom6();
   buildRoom6Furniture();

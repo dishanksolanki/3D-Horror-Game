@@ -41,6 +41,31 @@ function buildRoom5(){
   southWall.rotation.y = Math.PI;
   scene.add(southWall);
 
+  // NOTE: the doorway itself is cut by room3.js's east wall panels, which
+  // face INTO room3 only (planes render one-sided). Without a matching
+  // wall here facing INTO room5, you could see clean through to room3 from
+  // anywhere along this wall except the door gap. These panels mirror
+  // room3's east wall exactly, just facing the opposite direction.
+  const gapHalf5 = ROOM5_GAPHALF;
+  const sideD5 = (ROOM5_W/2) - gapHalf5;
+  const westTex5 = wallTexture(); westTex5.repeat.set(1.4,1.5);
+  const westMat5 = new THREE.MeshStandardMaterial({map:westTex5, roughness:0.95});
+
+  const nearPanelW5 = new THREE.Mesh(new THREE.PlaneGeometry(sideD5, ROOM5_H), westMat5);
+  nearPanelW5.position.set(ROOM5_WEST_X, ROOM5_H/2, cz-(gapHalf5+sideD5/2));
+  nearPanelW5.rotation.y = Math.PI/2;
+  scene.add(nearPanelW5);
+
+  const farPanelW5 = new THREE.Mesh(new THREE.PlaneGeometry(sideD5, ROOM5_H), westMat5.clone());
+  farPanelW5.position.set(ROOM5_WEST_X, ROOM5_H/2, cz+(gapHalf5+sideD5/2));
+  farPanelW5.rotation.y = Math.PI/2;
+  scene.add(farPanelW5);
+
+  const lintelW5 = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf5*2+0.4, ROOM5_H-DOOR_H), westMat5.clone());
+  lintelW5.position.set(ROOM5_WEST_X, DOOR_H+(ROOM5_H-DOOR_H)/2, cz);
+  lintelW5.rotation.y = Math.PI/2;
+  scene.add(lintelW5);
+
   // NOTE: no west wall here on purpose — room3.js cuts the doorway into
   // its own east wall at ROOM3_EAST_X === ROOM5_WEST_X, so the two rooms
   // open straight into each other.

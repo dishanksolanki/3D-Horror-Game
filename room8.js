@@ -86,7 +86,7 @@ function buildRoom8(){
 
   // walkable zone, overlapping east into room 6 so the shared doorway
   // feels seamless in both directions
-  obstacles.push({minX:westX, maxX:eastX+1.0, minZ:cz-ROOM8_D/2, maxZ:cz+ROOM8_D/2, isRoomBound:true});
+  obstacles.push({minX:westX, maxX:eastX, minZ:cz-ROOM8_D/2, maxZ:cz+ROOM8_D/2, isRoomBound:true});
 }
 
 /* ---------------- room 8 furniture ---------------- */

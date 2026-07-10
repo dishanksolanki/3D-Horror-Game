@@ -38,9 +38,12 @@ function buildRoom6(){
   ceil.position.set(cx, ROOM6_H, centerZ);
   scene.add(ceil);
 
-  // north wall - doorway through to room 9 (the hall)
+  // north wall - doorway through to room 9 (the hall). Room 9 is wider
+  // than room 6 (ROOM9_W > ROOM6_W) but shares the same centerline, so
+  // this wall has to be sized off ROOM9_W or it leaves room 9's south
+  // wall unsealed past room 6's narrower footprint.
   const nGapHalf = GATE9_GAPHALF;
-  const nSideW = (ROOM6_W/2) - nGapHalf;
+  const nSideW = (ROOM9_W/2) - nGapHalf;
   const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM6_H), wallMat.clone());
   nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM6_H/2, ROOM6_NORTH_Z);
   scene.add(nLeftPanel);
@@ -57,14 +60,17 @@ function buildRoom6(){
   const n9ft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); n9ft.position.set(cx, DOOR_H+0.1, ROOM6_NORTH_Z);
   scene.add(n9fl, n9fr, n9ft);
 
-  // east wall - doorway through to room 7
-  const eastSpan = (ROOM6_D - GATE7_GAPHALF*2)/2;
+  // east wall - doorway through to room 7. Room 7 is deeper than room 6
+  // (ROOM7_D > ROOM6_D) but shares the same centerZ, so size this wall
+  // off ROOM7_D and anchor the panels to centerZ, not room 6's own
+  // (narrower) north/south bounds, or the ends of room 7 go unsealed.
+  const eastSpan = (ROOM7_D - GATE7_GAPHALF*2)/2;
   const eastWallN = new THREE.Mesh(new THREE.PlaneGeometry(eastSpan, ROOM6_H), wallMat.clone());
-  eastWallN.position.set(cx+ROOM6_W/2, ROOM6_H/2, ROOM6_NORTH_Z + eastSpan/2);
+  eastWallN.position.set(cx+ROOM6_W/2, ROOM6_H/2, centerZ - ROOM7_D/2 + eastSpan/2);
   eastWallN.rotation.y = -Math.PI/2;
   scene.add(eastWallN);
   const eastWallS = new THREE.Mesh(new THREE.PlaneGeometry(eastSpan, ROOM6_H), wallMat.clone());
-  eastWallS.position.set(cx+ROOM6_W/2, ROOM6_H/2, ROOM6_SOUTH_Z - eastSpan/2);
+  eastWallS.position.set(cx+ROOM6_W/2, ROOM6_H/2, centerZ + ROOM7_D/2 - eastSpan/2);
   eastWallS.rotation.y = -Math.PI/2;
   scene.add(eastWallS);
   const eastLintel = new THREE.Mesh(new THREE.PlaneGeometry(GATE7_GAPHALF*2, ROOM6_H - DOOR_H), wallMat.clone());
@@ -72,14 +78,17 @@ function buildRoom6(){
   eastLintel.rotation.y = -Math.PI/2;
   scene.add(eastLintel);
 
-  // west wall - doorway through to room 8
-  const westSpan = (ROOM6_D - GATE8_GAPHALF*2)/2;
+  // west wall - doorway through to room 8. Room 8 is deeper than room 6
+  // (ROOM8_D > ROOM6_D) but shares the same centerZ, so size this wall
+  // off ROOM8_D and anchor the panels to centerZ, not room 6's own
+  // (narrower) north/south bounds, or the ends of room 8 go unsealed.
+  const westSpan = (ROOM8_D - GATE8_GAPHALF*2)/2;
   const westWallN = new THREE.Mesh(new THREE.PlaneGeometry(westSpan, ROOM6_H), wallMat.clone());
-  westWallN.position.set(cx-ROOM6_W/2, ROOM6_H/2, ROOM6_NORTH_Z + westSpan/2);
+  westWallN.position.set(cx-ROOM6_W/2, ROOM6_H/2, centerZ - ROOM8_D/2 + westSpan/2);
   westWallN.rotation.y = Math.PI/2;
   scene.add(westWallN);
   const westWallS = new THREE.Mesh(new THREE.PlaneGeometry(westSpan, ROOM6_H), wallMat.clone());
-  westWallS.position.set(cx-ROOM6_W/2, ROOM6_H/2, ROOM6_SOUTH_Z - westSpan/2);
+  westWallS.position.set(cx-ROOM6_W/2, ROOM6_H/2, centerZ + ROOM8_D/2 - westSpan/2);
   westWallS.rotation.y = Math.PI/2;
   scene.add(westWallS);
   const westLintel = new THREE.Mesh(new THREE.PlaneGeometry(GATE8_GAPHALF*2, ROOM6_H - DOOR_H), wallMat.clone());
@@ -92,12 +101,15 @@ function buildRoom6(){
 
   // baseboard trim along the solid stretches of wall - the south threshold trim
   // is already laid down by room 2's own doorway construction
+  // trim is sized off the neighboring rooms' dimensions (not room 6's own),
+  // matching the wider/deeper wall panels above so the baseboard doesn't
+  // stop short of the actual wall
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM6_W,0.15,0.1), trimMat);
+  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM9_W,0.15,0.1), trimMat);
   trimN.position.set(cx,0.08,ROOM6_NORTH_Z); scene.add(trimN);
-  const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM6_D), trimMat);
+  const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM7_D), trimMat);
   trimE.position.set(cx+ROOM6_W/2,0.08,centerZ); scene.add(trimE);
-  const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM6_D), trimMat);
+  const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM8_D), trimMat);
   trimW.position.set(cx-ROOM6_W/2,0.08,centerZ); scene.add(trimW);
 
   // dim, unsteady oil-lamp glow is the only light source in the shrine

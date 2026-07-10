@@ -94,7 +94,7 @@ function buildRoom3(){
   const eGapHalf = DOOR35_GAPHALF;
   const eSideD = (ROOM3_W/2) - eGapHalf;
   const eastTex = wallTexture(); eastTex.repeat.set(1.4,1.5);
-  const eastMat = new THREE.MeshStandardMaterial({map:eastTex, roughness:0.95, metalness:0.02});
+  const eastMat = new THREE.MeshStandardMaterial({map:eastTex, roughness:0.95, metalness:0.02, side:THREE.DoubleSide});
 
   const eNearPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM3_H), eastMat);
   eNearPanel.position.set(ROOM3_EAST_X, ROOM3_H/2, cz-(eGapHalf+eSideD/2));
@@ -183,7 +183,11 @@ function buildRoom3(){
   fan(1.2, [ROOM3_WEST_X+0.05, ROOM3_H-0.04, cz-ROOM3_W/2+0.05], [0, Math.PI/4, 0], 7, 0.2);
   fan(1.1, [ROOM3_WEST_X+0.03, ROOM3_H-0.04, cz+ROOM3_W/2-0.05], [0, -Math.PI/4, 0], 6, 0.2);
 
-  // walkable zone, widened by 1 unit on the east side so the threshold into
-  // room 5 (which shares this same wall plane, no corridor) is walkable
-  obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X+1.0, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
+  // walkable zone - stops exactly at the wall on every side
+  obstacles.push({minX:ROOM3_WEST_X, maxX:ROOM3_EAST_X, minZ:cz-ROOM3_W/2, maxZ:cz+ROOM3_W/2, isRoomBound:true});
+
+  // a narrow bridge zone, only as wide as the doorway gap itself, so the
+  // player can only cross into room 5 through the actual opening and is
+  // blocked everywhere else along the shared wall
+  obstacles.push({minX:ROOM3_EAST_X-0.6, maxX:ROOM5_WEST_X+0.6, minZ:cz-eGapHalf, maxZ:cz+eGapHalf, isRoomBound:true});
 }

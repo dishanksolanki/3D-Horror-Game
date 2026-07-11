@@ -1,11 +1,13 @@
 /* ============================================================
-   HAVELI OF SHADOWS — ROOM 11 (a small ritual chamber) + corridor11,
-   the extremely short 0.25-metre stone connector linking it to room
-   10's north wall. Requires engine.js and room10.js to be loaded
-   first (room10.js already cuts the doorway gap into its own north
-   wall; this file builds the short connector itself and room 11 on
-   the other end, including room 11's own south doorway that mirrors
-   it).
+   HAVELI OF SHADOWS — ROOM 11 (a small, now-bare chamber) +
+   corridor11, the extremely short 0.25-metre stone connector linking
+   it to room 10's north wall. Room 11 also has its own openable/
+   closable gate on the OPPOSITE (north) wall, with a short dead-end
+   threshold beyond it - see buildRoom11Gate(). Requires engine.js and
+   room10.js to be loaded first (room10.js already cuts the doorway
+   gap into its own north wall; this file builds the short connector
+   itself and room 11 on the other end, including room 11's own south
+   doorway that mirrors it).
    ============================================================ */
 
 function buildCorridor11(){
@@ -71,10 +73,11 @@ function buildCorridor11(){
 }
 
 function buildRoom11(){
-  // room 11: a small ritual chamber, reached only via corridor11 off
-  // room 10's north wall. East, west, and north walls are solid dead
-  // ends for now - the south wall carries the doorway back through
-  // corridor11 to room 10.
+  // room 11: a small, now-bare chamber, reached only via corridor11 off
+  // room 10's north wall. East and west walls are solid dead ends for
+  // now - the south wall carries the doorway back through corridor11 to
+  // room 10, and the north wall carries the openable/closable gate
+  // (built in buildRoom11Gate() below).
   const cx = 0;
   const centerZ = (ROOM11_SOUTH_Z + ROOM11_NORTH_Z)/2;
   const wTex = wallTexture(); wTex.repeat.set(3.4, 1.5);
@@ -93,11 +96,35 @@ function buildRoom11(){
   ceil.position.set(cx, ROOM11_H, centerZ);
   scene.add(ceil);
 
-  // north wall - solid, dead end for now (future rooms could open off
-  // here later, the same way room9/room10 grew deeper into the haveli)
-  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM11_W, ROOM11_H), wallMat.clone());
-  northWall.position.set(cx, ROOM11_H/2, ROOM11_NORTH_Z);
-  scene.add(northWall);
+  // north wall - now carries a gap for the gate (opposite room 11's
+  // south/corridor11 connection), matching ROOM11_GATE_GAPHALF. The
+  // door leaf itself, its hinge, and the little threshold beyond are
+  // built in buildRoom11Gate() below.
+  const gGapHalf = ROOM11_GATE_GAPHALF;
+  const gSideW = (ROOM11_W/2) - gGapHalf;
+  const gTex = wallTexture(); gTex.repeat.set(1.4,1.5);
+  const gMat = new THREE.MeshStandardMaterial({map:gTex, roughness:0.95, metalness:0.02});
+
+  const gLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(gSideW, ROOM11_H), gMat);
+  gLeftPanel.position.set(cx-(gGapHalf+gSideW/2), ROOM11_H/2, ROOM11_NORTH_Z);
+  scene.add(gLeftPanel);
+
+  const gRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(gSideW, ROOM11_H), gMat.clone());
+  gRightPanel.position.set(cx+(gGapHalf+gSideW/2), ROOM11_H/2, ROOM11_NORTH_Z);
+  scene.add(gRightPanel);
+
+  const gLintel = new THREE.Mesh(new THREE.PlaneGeometry(gGapHalf*2+0.4, ROOM11_H-DOOR_H), gMat.clone());
+  gLintel.position.set(cx, DOOR_H+(ROOM11_H-DOOR_H)/2, ROOM11_NORTH_Z);
+  scene.add(gLintel);
+
+  // carved stone frame around the gate opening, heavier-looking than
+  // the wooden doorway frames elsewhere, to set the gate apart
+  const gFrameMat = new THREE.MeshStandardMaterial({color:0x22190f, roughness:0.9});
+  const gFrameSide = new THREE.BoxGeometry(0.28, DOOR_H+0.14, 0.2);
+  const gfl = new THREE.Mesh(gFrameSide, gFrameMat); gfl.position.set(cx-gGapHalf-0.12, DOOR_H/2+0.07, ROOM11_NORTH_Z);
+  const gfr = new THREE.Mesh(gFrameSide, gFrameMat); gfr.position.set(cx+gGapHalf+0.12, DOOR_H/2+0.07, ROOM11_NORTH_Z);
+  const gft = new THREE.Mesh(new THREE.BoxGeometry(gGapHalf*2+0.4, 0.2, 0.34), gFrameMat); gft.position.set(cx, DOOR_H+0.12, ROOM11_NORTH_Z);
+  scene.add(gfl, gfr, gft);
 
   // east wall - solid
   const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM11_D, ROOM11_H), wallMat.clone());
@@ -150,17 +177,19 @@ function buildRoom11(){
   trimSL.position.set(cx-(gapHalf+sideW/2),0.08,ROOM11_SOUTH_Z); scene.add(trimSL);
   const trimSR = new THREE.Mesh(new THREE.BoxGeometry(sideW,0.15,0.1), trimMat);
   trimSR.position.set(cx+(gapHalf+sideW/2),0.08,ROOM11_SOUTH_Z); scene.add(trimSR);
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM11_W,0.15,0.1), trimMat);
-  trimN.position.set(cx,0.08,ROOM11_NORTH_Z); scene.add(trimN);
+  const trimNL = new THREE.Mesh(new THREE.BoxGeometry(gSideW,0.15,0.1), trimMat);
+  trimNL.position.set(cx-(gGapHalf+gSideW/2),0.08,ROOM11_NORTH_Z); scene.add(trimNL);
+  const trimNR = new THREE.Mesh(new THREE.BoxGeometry(gSideW,0.15,0.1), trimMat);
+  trimNR.position.set(cx+(gGapHalf+gSideW/2),0.08,ROOM11_NORTH_Z); scene.add(trimNR);
   const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM11_D), trimMat);
   trimE.position.set(cx+ROOM11_W/2,0.08,centerZ); scene.add(trimE);
   const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM11_D), trimMat);
   trimW.position.set(cx-ROOM11_W/2,0.08,centerZ); scene.add(trimW);
 
-  // a small cluster of guttering diya-style lights over the altar,
-  // deeper and stranger-feeling than room10's single lantern
+  // a single weak, guttering lantern hung centrally, now that the room
+  // is otherwise bare (its furniture removed)
   const lamp = new THREE.PointLight(0xff9748, 0.6, 5.5, 2.3);
-  lamp.position.set(cx, 1.5, ROOM11_NORTH_Z+0.9);
+  lamp.position.set(cx, ROOM11_H-0.3, centerZ);
   scene.add(lamp);
   room11Light = lamp;
 
@@ -175,72 +204,121 @@ function buildRoom11(){
   fan(0.95, [cx+ROOM11_W/2-0.05, ROOM11_H-0.04, ROOM11_NORTH_Z+0.05], [0, -Math.PI/4+Math.PI/2, 0], 7, 0.3);
 
   // walkable zone - tight to room 11's own real walls (no padding), so
-  // the solid north/east/west wall panels actually block movement. The
-  // doorway crossing back into corridor11 is handled by corridor11's
-  // own bridge zone, so no separate bridge is needed here.
+  // the solid east/west wall panels and the solid stretches either side
+  // of the north gate actually block movement. The doorway crossing
+  // back into corridor11 (south) is handled by corridor11's own bridge
+  // zone. The gate's own obstacle + threshold zone are added in
+  // buildRoom11Gate() below.
   obstacles.push({minX:cx-ROOM11_W/2, maxX:cx+ROOM11_W/2, minZ:ROOM11_NORTH_Z, maxZ:ROOM11_SOUTH_Z, isRoomBound:true});
 }
 
-/* ---------------- room 11 furniture ---------------- */
+/* ---------------- room 11 gate ---------------- */
 
-function buildRoom11Furniture(){
+function buildRoom11Gate(){
+  // the gate itself: a hinged stone-bound wooden door filling the gap
+  // cut into room 11's north wall (buildRoom11() above), plus a short,
+  // fog-choked threshold just beyond it - dead-ended for now, ready for
+  // a future room 12. The door opens/closes on click, same interaction
+  // style as the almirah drawers and storage chest lids.
   const cx = 0;
+  const gapHalf = ROOM11_GATE_GAPHALF;
 
-  // --- a low stone altar against the north wall, holding a cracked
-  // idol and a scatter of unlit diyas - the room's centrepiece ---
-  const stoneMat = new THREE.MeshStandardMaterial({color:0x2c261e, roughness:0.92});
-  const altarBase = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.55, 0.6), stoneMat);
-  altarBase.position.set(cx, 0.275, ROOM11_NORTH_Z+0.5);
-  altarBase.castShadow = true; altarBase.receiveShadow = true;
-  scene.add(altarBase);
+  // --- the door leaf, hinged on its west edge (rotates on the Y axis) ---
+  const hingeX = cx - gapHalf;
+  const hingePivot = new THREE.Object3D();
+  hingePivot.position.set(hingeX, 0, ROOM11_NORTH_Z);
+  scene.add(hingePivot);
 
-  const altarTop = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.06, 0.68), stoneMat);
-  altarTop.position.set(cx, 0.58, ROOM11_NORTH_Z+0.5);
-  scene.add(altarTop);
+  const doorTex = woodTexture('#3a2513', null);
+  const doorMat = new THREE.MeshStandardMaterial({map:doorTex, roughness:0.85});
+  const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(gapHalf*2, DOOR_H, 0.08), doorMat);
+  doorMesh.position.set(gapHalf, DOOR_H/2, 0); // shifted so the door's own west edge sits at the hinge (local x=0)
+  doorMesh.castShadow = true; doorMesh.receiveShadow = true;
+  doorMesh.userData.gateIndex = gates.length;
+  hingePivot.add(doorMesh);
 
-  // cracked idol, roughly humanoid, weathered dark stone
-  const idolMat = new THREE.MeshStandardMaterial({color:0x1f1a14, roughness:0.85});
-  const idolGroup = new THREE.Group();
-  const idolBody = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 8), idolMat);
-  idolBody.position.y = 0.21;
-  idolGroup.add(idolBody);
-  const idolHead = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), idolMat);
-  idolHead.position.y = 0.46;
-  idolGroup.add(idolHead);
-  idolGroup.position.set(cx, 0.61, ROOM11_NORTH_Z+0.42);
-  idolGroup.rotation.z = 0.06; // slightly toppled, unsettling rather than tidy
-  scene.add(idolGroup);
-
-  // scattered unlit diya lamps along the altar top
-  const diyaMat = new THREE.MeshStandardMaterial({color:0x4a3a1c, roughness:0.7});
-  const diyaPositions = [[-0.55,0.03],[-0.3,-0.08],[0.4,0.05],[0.6,-0.1]];
-  diyaPositions.forEach(([dx,dz])=>{
-    const diya = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.04,0.03,10), diyaMat);
-    diya.position.set(cx+dx, 0.62, ROOM11_NORTH_Z+0.5+dz);
-    scene.add(diya);
+  // a couple of iron cross-braces for a heavier, older look
+  const braceMat = new THREE.MeshStandardMaterial({color:0x1c1a16, roughness:0.6, metalness:0.55});
+  [0.35*DOOR_H, 0.75*DOOR_H].forEach(y=>{
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(gapHalf*2-0.06, 0.06, 0.1), braceMat);
+    brace.position.set(gapHalf, y, 0.01);
+    brace.userData.gateIndex = gates.length;
+    hingePivot.add(brace);
   });
 
-  obstacles.push(boxFor(new THREE.Vector3(cx,0,ROOM11_NORTH_Z+0.5), 0.85, 0.4, 0.1));
+  // an iron ring handle on the door's free (east) edge
+  const handleMat = new THREE.MeshStandardMaterial({color:0x1c1c1c, roughness:0.5, metalness:0.7});
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.06,0.015,8,16), handleMat);
+  handle.position.set(gapHalf*2-0.12, DOOR_H/2, 0.06);
+  handle.rotation.x = Math.PI/2;
+  handle.userData.gateIndex = gates.length;
+  hingePivot.add(handle);
 
-  // --- faded rangoli-style ash markings swept across the floor in
-  // front of the altar, long since disturbed ---
-  const ashMat = new THREE.MeshStandardMaterial({map:shrineClothTexture(), roughness:0.95, transparent:true, opacity:0.5});
-  const ashMark = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.1), ashMat);
-  ashMark.rotation.x = -Math.PI/2;
-  ashMark.position.set(cx, 0.007, ROOM11_NORTH_Z+1.5);
-  scene.add(ashMark);
+  gates.push({
+    hingePivot, doorMesh, handle,
+    isOpen: false,
+    current: 0,
+    openAngle: -Math.PI*0.62 // swings inward into room 11, same family as the storage chest lid
+  });
 
-  // --- a toppled brass bell near the east wall, silent and dust-caked ---
-  const bellMat = new THREE.MeshStandardMaterial({color:0x5a4a26, roughness:0.55, metalness:0.6});
-  const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.13,0.16,10), bellMat);
-  bell.position.set(cx+ROOM11_W/2-0.6, 0.08, ROOM11_SOUTH_Z-1.1);
-  bell.rotation.z = Math.PI/2.2;
-  scene.add(bell);
+  // an obstacle box sitting exactly at the gate, blocking movement
+  // whenever the door is closed - skipped automatically in tryMove()
+  // once the door has actually swung open (see engine.js)
+  obstacles.push({
+    minX: hingeX-0.05, maxX: hingeX+gapHalf*2+0.05,
+    minZ: ROOM11_NORTH_Z-0.12, maxZ: ROOM11_NORTH_Z+0.12,
+    isGate: true, gateRef: gates[gates.length-1]
+  });
 
-  // --- cobweb strand low across the doorway threshold, torn where the
-  // player would brush through it ---
-  const strand = new THREE.Mesh(new THREE.PlaneGeometry(GATE11_GAPHALF*1.6, 0.5),
-    new THREE.MeshBasicMaterial({map:strandWebTexture(), transparent:true, side:THREE.DoubleSide, depthWrite:false}));
-  strand.position.set(cx, DOOR_H-0.6, ROOM11_SOUTH_Z-0.06);
-  scene.add(strand);
+  // --- the short threshold beyond the gate: floor/ceiling/side walls
+  // and a solid dead-end far wall, so opening the gate reveals a small
+  // fog-choked space rather than a void ---
+  const tCenterZ = (ROOM11_NORTH_Z + ROOM11_GATE_FAR_Z)/2;
+  const tWTex = wallTexture(); tWTex.repeat.set(0.7, 1.3);
+  const tWallMat = new THREE.MeshStandardMaterial({map:tWTex, roughness:0.97, metalness:0.02});
+  const tFloorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.92});
+  const tCeilMat = new THREE.MeshStandardMaterial({map:ceilingTexture(), roughness:1});
+
+  const tFloor = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf*2, ROOM11_GATE_DEPTH), tFloorMat);
+  tFloor.rotation.x = -Math.PI/2;
+  tFloor.position.set(cx, 0, tCenterZ);
+  tFloor.receiveShadow = true;
+  scene.add(tFloor);
+
+  const tCeil = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf*2, ROOM11_GATE_DEPTH), tCeilMat);
+  tCeil.rotation.x = Math.PI/2;
+  tCeil.position.set(cx, ROOM11_H, tCenterZ);
+  scene.add(tCeil);
+
+  const tWestWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM11_GATE_DEPTH, ROOM11_H), tWallMat);
+  tWestWall.position.set(cx-gapHalf, ROOM11_H/2, tCenterZ);
+  tWestWall.rotation.y = Math.PI/2;
+  scene.add(tWestWall);
+
+  const tEastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM11_GATE_DEPTH, ROOM11_H), tWallMat.clone());
+  tEastWall.position.set(cx+gapHalf, ROOM11_H/2, tCenterZ);
+  tEastWall.rotation.y = -Math.PI/2;
+  scene.add(tEastWall);
+
+  // the dead-end far wall - solid for now
+  const tFarWall = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf*2, ROOM11_H), tWallMat.clone());
+  tFarWall.position.set(cx, ROOM11_H/2, ROOM11_GATE_FAR_Z);
+  scene.add(tFarWall);
+
+  // a single guttering, colder lantern - deeper and lonelier feeling
+  // than anything in room 11 proper
+  const tLantern = new THREE.PointLight(0x6a7a99, 0.35, 3.2, 2.8);
+  tLantern.position.set(cx, ROOM11_H-0.25, tCenterZ);
+  scene.add(tLantern);
+
+  // a heavy cobweb curtain across the threshold, undisturbed for a
+  // long time behind the closed gate
+  const web = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf*1.8, ROOM11_H*0.7),
+    new THREE.MeshBasicMaterial({map:cobwebTextureVariant(9,0.1), transparent:true, side:THREE.DoubleSide, depthWrite:false}));
+  web.position.set(cx, ROOM11_H*0.4, tCenterZ);
+  scene.add(web);
+
+  // walkable zone for the threshold, overlapping back into room 11 so
+  // crossing the gate (once open) feels seamless
+  obstacles.push({minX:cx-gapHalf, maxX:cx+gapHalf, minZ:ROOM11_GATE_FAR_Z, maxZ:ROOM11_NORTH_Z+0.5, isRoomBound:true});
 }

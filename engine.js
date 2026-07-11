@@ -113,7 +113,7 @@ let roomBoxes = [];
 
 // torch pickup (found in room 1's trunk) + the held torch once picked up
 let torchPickupGroup = null, torchPickupMeshes = [], torchPickupEmberLight = null;
-let heldTorchGroup = null, heldTorchFlame = null, heldTorchLight = null;
+let heldTorchGroup = null, heldTorchFlame = null, heldTorchFlameCore = null, heldTorchLight = null;
 let hasTorch = false, torchOn = false;
 let raycaster = new THREE.Raycaster();
 raycaster.far = 3.2;
@@ -590,6 +590,96 @@ function boxFor(pos, hx, hz, pad){
   return {minX:pos.x-hx-pad, maxX:pos.x+hx+pad, minZ:pos.z-hz-pad, maxZ:pos.z+hz+pad};
 }
 
+function flameTexture(){
+  // a soft, layered fire silhouette (hot white core -> orange -> red, fading
+  // to nothing) for a billboarded sprite flame, rather than a flat sphere
+  const S = 128;
+  const c = makeCanvas(S,S), ctx = c.getContext('2d');
+  ctx.clearRect(0,0,S,S);
+  const cx = S/2, cy = S*0.6;
+  // outer body of the flame
+  const outer = ctx.createRadialGradient(cx,cy,2,cx,cy,S*0.48);
+  outer.addColorStop(0,   'rgba(255,240,200,0.95)');
+  outer.addColorStop(0.28,'rgba(255,190,80,0.85)');
+  outer.addColorStop(0.6, 'rgba(255,110,25,0.5)');
+  outer.addColorStop(1,   'rgba(200,40,10,0)');
+  ctx.fillStyle = outer;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, S*0.32, S*0.46, 0, 0, Math.PI*2);
+  ctx.fill();
+  // tapered tongue reaching up toward the tip
+  const tip = ctx.createRadialGradient(cx, S*0.22, 1, cx, S*0.22, S*0.24);
+  tip.addColorStop(0,'rgba(255,255,235,0.95)');
+  tip.addColorStop(0.5,'rgba(255,200,90,0.6)');
+  tip.addColorStop(1,'rgba(255,150,40,0)');
+  ctx.fillStyle = tip;
+  ctx.beginPath();
+  ctx.ellipse(cx, S*0.3, S*0.13, S*0.22, 0, 0, Math.PI*2);
+  ctx.fill();
+  // hot blue-white base where the flame meets the fuel
+  const base = ctx.createRadialGradient(cx, S*0.82, 1, cx, S*0.82, S*0.16);
+  base.addColorStop(0,'rgba(255,255,255,0.9)');
+  base.addColorStop(1,'rgba(255,200,100,0)');
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.ellipse(cx, S*0.82, S*0.14, S*0.1, 0, 0, Math.PI*2);
+  ctx.fill();
+  return new THREE.CanvasTexture(c);
+}
+
+function torchShaftTexture(){
+  // a small tileable wood-grain texture for the torch's handle, dark and
+  // charred toward the top where it meets the burning cloth head
+  const S = 128;
+  const c = makeCanvas(S,S), ctx = c.getContext('2d');
+  ctx.fillStyle = '#3b2413'; ctx.fillRect(0,0,S,S);
+  for(let i=0;i<50;i++){
+    const x = Math.random()*S;
+    ctx.strokeStyle = `rgba(18,9,4,${0.08+Math.random()*0.2})`;
+    ctx.lineWidth = 0.6+Math.random()*1.3;
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x+(Math.random()-0.5)*10, S);
+    ctx.stroke();
+  }
+  for(let i=0;i<600;i++){
+    ctx.fillStyle = `rgba(10,5,2,${Math.random()*0.12})`;
+    ctx.fillRect(Math.random()*S, Math.random()*S, 1,1);
+  }
+  const g = ctx.createLinearGradient(0,0,0,S*0.4);
+  g.addColorStop(0,'rgba(8,5,3,0.95)');
+  g.addColorStop(1,'rgba(8,5,3,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,S,S*0.4);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function charredClothTexture(){
+  // tar-soaked rag wrap: woven fibre lines, soot speckle, and a burnt-black
+  // fringe along the top edge where it's been alight
+  const S = 128;
+  const c = makeCanvas(S,S), ctx = c.getContext('2d');
+  ctx.fillStyle = '#4a3a24'; ctx.fillRect(0,0,S,S);
+  ctx.strokeStyle = 'rgba(20,14,8,0.35)'; ctx.lineWidth = 1;
+  for(let i=0;i<S;i+=5){
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(S,i); ctx.stroke();
+  }
+  for(let i=0;i<500;i++){
+    ctx.fillStyle = `rgba(10,6,3,${Math.random()*0.35})`;
+    ctx.fillRect(Math.random()*S, Math.random()*S, 1,1);
+  }
+  const g = ctx.createLinearGradient(0,0,0,S*0.45);
+  g.addColorStop(0,'rgba(4,2,1,1)');
+  g.addColorStop(1,'rgba(4,2,1,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,S,S*0.45);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
 /* ---------------- controls ---------------- */
 
 function setupControls(){
@@ -690,7 +780,7 @@ function pickUpTorch(){
   hasTorch = true;
   torchOn = true;
   if(torchPickupGroup){
-    scene.remove(torchPickupGroup);
+    if(torchPickupGroup.parent) torchPickupGroup.parent.remove(torchPickupGroup);
     torchPickupGroup = null;
   }
   torchPickupMeshes = [];
@@ -713,6 +803,7 @@ function toggleTorch(){
   torchOn = !torchOn;
   if(heldTorchLight) heldTorchLight.visible = torchOn;
   if(heldTorchFlame) heldTorchFlame.visible = torchOn;
+  if(heldTorchFlameCore) heldTorchFlameCore.visible = torchOn;
   const status = document.getElementById('torch-status');
   if(status) status.textContent = torchOn ? 'torch: on' : 'torch: off';
 }
@@ -720,40 +811,65 @@ function toggleTorch(){
 function buildHeldTorch(){
   const group = new THREE.Group();
 
-  const handleMat = new THREE.MeshStandardMaterial({color:0x3b2413, roughness:0.9});
-  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.028,0.42,10), handleMat);
-  group.add(handle);
+  // tapered wooden shaft, charred near the top where the head burns
+  const shaftMat = new THREE.MeshStandardMaterial({map:torchShaftTexture(), roughness:0.92});
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.026,0.42,10), shaftMat);
+  shaft.castShadow = true;
+  group.add(shaft);
 
-  const wrapMat = new THREE.MeshStandardMaterial({color:0x241609, roughness:1});
-  for(let i=0;i<4;i++){
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.028,0.007,6,10), wrapMat);
+  // leather wrap bands along the grip
+  const wrapMat = new THREE.MeshStandardMaterial({color:0x1c1108, roughness:1});
+  for(let i=0;i<3;i++){
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.024,0.006,6,10), wrapMat);
     band.rotation.x = Math.PI/2;
-    band.position.y = -0.06 + i*0.05;
+    band.position.y = -0.14 + i*0.05;
     group.add(band);
   }
 
-  const clothMat = new THREE.MeshStandardMaterial({color:0x4a3a24, roughness:1});
-  const cloth = new THREE.Mesh(new THREE.ConeGeometry(0.045,0.15,8), clothMat);
-  cloth.position.y = 0.27;
+  // tar-soaked rag head, wrapped thicker than the shaft
+  const clothMat = new THREE.MeshStandardMaterial({map:charredClothTexture(), roughness:1});
+  const cloth = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,0.16,12,1,true), clothMat);
+  cloth.position.y = 0.25;
   group.add(cloth);
 
-  const flameMat = new THREE.MeshStandardMaterial({color:0xffb14d, emissive:0xff8a1f, emissiveIntensity:1.8, roughness:0.4, transparent:true, opacity:0.92});
-  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8), flameMat);
-  flame.position.y = 0.35;
-  flame.scale.set(0.8,1.3,0.8);
+  // a few frayed strips of rag poking out unevenly around the top
+  const strandMat = new THREE.MeshStandardMaterial({color:0x241a0e, roughness:1, side:THREE.DoubleSide});
+  for(let i=0;i<6;i++){
+    const a = (i/6)*Math.PI*2 + Math.random()*0.4;
+    const strip = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 0.06+Math.random()*0.03), strandMat);
+    strip.position.set(Math.cos(a)*0.032, 0.33, Math.sin(a)*0.032);
+    strip.rotation.y = -a;
+    strip.rotation.x = (Math.random()-0.5)*0.4;
+    group.add(strip);
+  }
+
+  // real flame: two layered, billboarded, additive-blended sprites so it
+  // reads as soft glowing fire instead of a solid lit-up ball
+  const flameTex = flameTexture();
+  const flameMat = new THREE.SpriteMaterial({map:flameTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+  const flame = new THREE.Sprite(flameMat);
+  flame.scale.set(0.24,0.34,1);
+  flame.position.y = 0.42;
   group.add(flame);
   heldTorchFlame = flame;
 
-  const light = new THREE.PointLight(0xff9a3c, 1.3, 4.5, 2.0);
-  light.position.y = 0.35;
+  const flameCore = new THREE.Sprite(flameMat.clone());
+  flameCore.scale.set(0.11,0.17,1);
+  flameCore.position.y = 0.39;
+  group.add(flameCore);
+  heldTorchFlameCore = flameCore;
+
+  // the real light source - warm, close-range, and heavily flickered in animate()
+  const light = new THREE.PointLight(0xff9a42, 1.7, 6, 2.0);
+  light.position.y = 0.42;
   light.castShadow = true;
   light.shadow.mapSize.set(256,256);
   group.add(light);
   heldTorchLight = light;
 
   // held low and to the right of the camera, like a hand carrying it
-  group.position.set(0.32, -0.32, -0.5);
-  group.rotation.set(-0.15, 0.3, -0.35);
+  group.position.set(0.3, -0.35, -0.5);
+  group.rotation.set(-0.2, 0.3, -0.35);
   camera.add(group);
   heldTorchGroup = group;
 }
@@ -858,15 +974,26 @@ function animate(){
     room10Light.intensity = 0.65 + Math.sin(t*3.1+2.1)*0.11 - r10Flicker;
   }
 
-  // torch: dim ember glow while it sits in the trunk, full flicker once carried
+  // torch: dim ember glow while it sits in the drawer, real fire flicker once carried
   if(torchPickupEmberLight){
     torchPickupEmberLight.intensity = 0.3 + Math.sin(t*2.6)*0.08;
   }
-  if(heldTorchLight){
-    if(torchOn){
-      const flick = Math.sin(t*9)*0.18 + Math.sin(t*3.7)*0.12 + (Math.random()<0.05?Math.random()*0.3:0);
-      heldTorchLight.intensity = 1.3 + flick;
-      if(heldTorchFlame) heldTorchFlame.material.emissiveIntensity = 1.6 + flick*1.2;
+  if(heldTorchLight && torchOn){
+    // layered sine noise + occasional random dips, like real firelight
+    const flick = Math.sin(t*11)*0.16 + Math.sin(t*4.3+1.7)*0.14 + Math.sin(t*23)*0.06
+      + (Math.random()<0.06 ? (Math.random()-0.5)*0.5 : 0);
+    heldTorchLight.intensity = 1.7 + flick;
+    heldTorchLight.position.x = Math.sin(t*17)*0.01;
+    heldTorchLight.position.z = Math.cos(t*13)*0.01;
+    if(heldTorchFlame){
+      const s = 1 + flick*0.18;
+      heldTorchFlame.scale.set(0.24*s, 0.34*(1+flick*0.12), 1);
+      heldTorchFlame.position.x = Math.sin(t*15)*0.012;
+    }
+    if(heldTorchFlameCore){
+      const s2 = 1 + flick*0.22;
+      heldTorchFlameCore.scale.set(0.11*s2, 0.17*(1+flick*0.16), 1);
+      heldTorchFlameCore.position.x = Math.sin(t*19+0.5)*0.008;
     }
   }
 

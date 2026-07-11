@@ -735,9 +735,10 @@ function buildTorch(){
   group.add(ledLight);
 
   // lay the flashlight on its side inside the drawer (width-wise, where
-  // there's the most room), resting near the top of the drawer's interior
+  // there's the most room), resting on top of the drawer's solid base so
+  // it's actually visible above the wood rather than sealed inside it
   group.rotation.x = Math.PI/2;
-  group.position.set(bw*0.05, bh/2 - 0.03, bd*0.08);
+  group.position.set(bw*0.05, bh/2 + 0.035, bd*0.08);
   box.add(group);
 
   const meshes = group.children.filter(m=>m.isMesh);

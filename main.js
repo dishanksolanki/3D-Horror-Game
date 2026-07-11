@@ -3,7 +3,7 @@ HAVELI OF SHADOWS — MAIN
 Boots the whole haveli: builds every room in order, wires up
 controls, and starts the render loop.
 Load this file LAST, after engine.js, room1.js, room2.js,
-room3.js, washroom1.js, room6.js, room7.js, and room8.js.
+room3.js, washroom1.js, room6.js, room7.js, room8.js, and room9.js.
 ============================================================ */
 
 function init(){
@@ -57,6 +57,9 @@ function init(){
   buildRoom7();
   buildRoom8();
 
+  buildCorridor9();
+  buildRoom9();
+  buildRoom9Furniture();
 
   window.addEventListener('resize', onResize);
   setupControls();

@@ -120,10 +120,49 @@ const ROOM11_NORTH_Z = ROOM11_SOUTH_Z - ROOM11_D;
    threshold, left unbuilt-out for now (ready for a future room 12). ---- */
 const ROOM11_GATE_GAPHALF = 0.8;
 const ROOM11_GATE_DEPTH = 1.8; // how far the little threshold beyond the gate runs
-const ROOM11_GATE_FAR_Z = ROOM11_NORTH_Z - ROOM11_GATE_DEPTH; // the dead-end wall beyond the gate
+const ROOM11_GATE_FAR_Z = ROOM11_NORTH_Z - ROOM11_GATE_DEPTH; // the far wall of the threshold - now cut through into corridor12b below, instead of dead-ending
+
+/* ---- room 12: a loop-closing room reached TWO ways, so the haveli
+   stops being a single dead-end chain here - via corridor12b, a short
+   straight continuation north from room 11's own gate threshold
+   (the "future room 12" the threshold was always built for), AND via
+   corridor12a, a bent two-segment passage that leaves room 10's east
+   wall, runs east, then turns north to reach room 12's east wall. The
+   two routes let the player circle room10 -> room11 -> room12 -> back
+   to room10 without retracing their steps. ---- */
+const ROOM10_CENTER_Z = (ROOM10_SOUTH_Z + ROOM10_NORTH_Z)/2;
+
+// -- corridor12a: bent connector, room10's east wall -> room12's east wall --
+const GATE12A_GAPHALF = 0.9; // matches room10's own doorway family
+const CORR12A_W = GATE12A_GAPHALF*2, CORR12A_H = ROOM10_H;
+const CORR12A_EW_LEN = 1.4; // first leg: straight east out of room10
+const CORR12A_WEST_X = ROOM10_W/2; // starts at room10's own east wall
+const CORR12A_CORNER_X = CORR12A_WEST_X + CORR12A_EW_LEN; // the bend
+const CORR12A_EW_Z = ROOM10_CENTER_Z; // first leg runs at room10's own mid-height (z)
+
+// -- room 12 itself --
+const GATE12B_GAPHALF = ROOM11_GATE_GAPHALF; // matches the gate threshold's own width exactly
+const CORR12B_W = GATE12B_GAPHALF*2, CORR12B_H = ROOM11_H;
+const CORR12B_LEN = 2.5; // second route's short final stretch, continuing on from the threshold
+const CORR12B_SOUTH_Z = ROOM11_GATE_FAR_Z; // picks up exactly where room11's threshold left off
+const CORR12B_NORTH_Z = CORR12B_SOUTH_Z - CORR12B_LEN;
+
+const ROOM12_W = 6.0, ROOM12_D = 6.0, ROOM12_H = 3.1;
+const ROOM12_SOUTH_Z = CORR12B_NORTH_Z; // room12's south wall (doorway back down corridor12b to room11)
+const ROOM12_NORTH_Z = ROOM12_SOUTH_Z - ROOM12_D;
+const ROOM12_CENTER_Z = (ROOM12_SOUTH_Z + ROOM12_NORTH_Z)/2;
+const ROOM12_EAST_X = CORR12A_CORNER_X; // room12's east wall (doorway to corridor12a's second leg) sits right at the bend
+const ROOM12_WEST_X = ROOM12_EAST_X - ROOM12_W;
+const ROOM12_CENTER_X = (ROOM12_EAST_X + ROOM12_WEST_X)/2;
+
+// -- corridor12a's second leg: the bend -> room12's east wall, running
+// north along the same x as the bend, at room12's own mid-height (z) --
+const CORR12A_NS_X = CORR12A_CORNER_X;
+const CORR12A_NS_SOUTH_Z = CORR12A_EW_Z;
+const CORR12A_NS_NORTH_Z = ROOM12_CENTER_Z;
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light, corridor11Light, room11Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light, corridor11Light, room11Light, corridor12aLight, corridor12bLight, room12Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -1042,6 +1081,21 @@ function animate(){
     // shorter, twitchier flicker cycle, similar in spirit to room6Light
     const r11Flicker = Math.random() < 0.05 ? Math.random()*0.28 : 0;
     room11Light.intensity = 0.55 + Math.sin(t*4.8)*0.1 + Math.sin(t*1.5)*0.06 - r11Flicker;
+  }
+
+  if(corridor12aLight){
+    const c12aFlicker = Math.random() < 0.035 ? Math.random()*0.3 : 0;
+    corridor12aLight.intensity = 0.4 + Math.sin(t*2.3+0.9)*0.08 - c12aFlicker;
+  }
+
+  if(corridor12bLight){
+    const c12bFlicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    corridor12bLight.intensity = 0.38 + Math.sin(t*2.7)*0.08 - c12bFlicker;
+  }
+
+  if(room12Light){
+    const r12Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    room12Light.intensity = 0.65 + Math.sin(t*2.9+1.1)*0.11 - r12Flicker;
   }
 
   // torch: a small steady standby LED while it sits in the drawer, a

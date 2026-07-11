@@ -92,8 +92,18 @@ const ROOM9_W = 7.0, ROOM9_D = 9.0, ROOM9_H = 3.4;
 const ROOM9_SOUTH_Z = CORR9_NORTH_Z; // room 9's south wall (doorway) z
 const ROOM9_NORTH_Z = ROOM9_SOUTH_Z - ROOM9_D;
 
+/* ---- room 10: a second hall, opening DIRECTLY off room 9's own north
+   wall - no corridor this time. Each room draws its own wall panels at
+   the shared doorway (rather than one room's wall doing double duty),
+   since PlaneGeometry only renders from one side - a single shared wall
+   would be invisible/see-through from whichever room didn't build it. ---- */
+const GATE10_GAPHALF = 0.9;
+const ROOM10_W = 6.4, ROOM10_D = 7.0, ROOM10_H = 3.2;
+const ROOM10_SOUTH_Z = ROOM9_NORTH_Z; // shares room 9's own north wall
+const ROOM10_NORTH_Z = ROOM10_SOUTH_Z - ROOM10_D;
+
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -752,6 +762,11 @@ function animate(){
   if(room9Light){
     const r9Flicker = Math.random() < 0.025 ? Math.random()*0.3 : 0;
     room9Light.intensity = 0.7 + Math.sin(t*2.4+0.6)*0.1 - r9Flicker;
+  }
+
+  if(room10Light){
+    const r10Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    room10Light.intensity = 0.65 + Math.sin(t*3.1+2.1)*0.11 - r10Flicker;
   }
 
   // bell sway

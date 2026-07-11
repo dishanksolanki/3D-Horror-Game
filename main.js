@@ -1,15 +1,15 @@
 /* ============================================================
-HAVELI OF SHADOWS — MAIN
-Boots the whole haveli: builds every room in order, wires up
-controls, and starts the render loop.
-Load this file LAST, after engine.js, room1.js, room2.js,
-room3.js, washroom1.js, room6.js, room7.js, room8.js, room9.js,
-and room10.js.
+   HAVELI OF SHADOWS — MAIN
+   Boots the whole haveli: builds every room in order, wires up
+   controls, and starts the render loop.
+   Load this file LAST, after engine.js, room1.js, room2.js,
+   room3.js, and washroom1.js.
 ============================================================ */
 
 function init(){
   scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x030304, 0.105);
+
   camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.05, 60);
   pitchObject = new THREE.Object3D();
   pitchObject.add(camera);
@@ -17,6 +17,8 @@ function init(){
   yawObject.position.set(0, 1.65, ROOM_D/2 - 2.2);
   yawObject.add(pitchObject);
   scene.add(yawObject);
+
+  buildFlashlight();
 
   renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -38,33 +40,18 @@ function init(){
   buildCharpai();
   buildTrunk();
   buildAlmirah();
-  buildTorch();
   buildMirror();
   buildBulb();
   buildBell();
   buildNicheIdol();
   buildCobwebs();
   buildBlood();
-
   buildCorridor();
   buildRoom2();
   buildRoom2Furniture();
-
   buildCorridor2();
   buildRoom3();
-
   buildRoom4();
-
-  buildRoom6();
-  buildRoom7();
-  buildRoom8();
-
-  buildCorridor9();
-  buildRoom9();
-  buildRoom9Furniture();
-
-  buildRoom10();
-  buildRoom10Furniture();
 
   window.addEventListener('resize', onResize);
   setupControls();

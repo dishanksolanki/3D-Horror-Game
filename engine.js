@@ -81,14 +81,19 @@ const ROOM8_EAST_X = -ROOM6_W/2; // shares room 6's own west wall
 const ROOM8_WEST_X = ROOM8_EAST_X - ROOM8_W;
 const ROOM8_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // aligned with room 6
 
-/* ---- room 9: a grand hall opening off room 6's north wall ---- */
+/* ---- room 9: a grand hall connected to room 6's north wall by a short
+   2-metre stone corridor (corridor9), the same way room 1 connects to
+   room 2 - NOT a direct through-the-wall doorway like rooms 6/7/8 ---- */
 const GATE9_GAPHALF = 1.0; // wide, grand doorway befitting a hall
+const CORR9_LEN = 2.0, CORR9_W = GATE9_GAPHALF*2, CORR9_H = 2.5;
+const CORR9_SOUTH_Z = ROOM6_NORTH_Z; // corridor starts at room 6's own north wall
+const CORR9_NORTH_Z = CORR9_SOUTH_Z - CORR9_LEN; // corridor ends here
 const ROOM9_W = 7.0, ROOM9_D = 9.0, ROOM9_H = 3.4;
-const ROOM9_SOUTH_Z = ROOM6_NORTH_Z; // shares room 6's own north wall
+const ROOM9_SOUTH_Z = CORR9_NORTH_Z; // room 9's south wall (doorway) z
 const ROOM9_NORTH_Z = ROOM9_SOUTH_Z - ROOM9_D;
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -737,6 +742,16 @@ function animate(){
     // the haveli's electric-style lights
     const sFlicker = Math.random() < 0.06 ? Math.random()*0.3 : 0;
     room6Light.intensity = 0.5 + Math.sin(t*5.4)*0.12 + Math.sin(t*1.7)*0.08 - sFlicker;
+  }
+
+  if(corridor9Light){
+    const c9Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    corridor9Light.intensity = 0.42 + Math.sin(t*2.1)*0.08 - c9Flicker;
+  }
+
+  if(room9Light){
+    const r9Flicker = Math.random() < 0.025 ? Math.random()*0.3 : 0;
+    room9Light.intensity = 0.7 + Math.sin(t*2.4+0.6)*0.1 - r9Flicker;
   }
 
   // bell sway

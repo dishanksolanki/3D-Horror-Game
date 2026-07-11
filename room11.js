@@ -300,21 +300,10 @@ function buildRoom11Gate(){
   tEastWall.rotation.y = -Math.PI/2;
   scene.add(tEastWall);
 
-  // the far wall - no longer a dead end. It now opens straight through
-  // into corridor12b and, beyond that, room 12 (GATE12B_GAPHALF matches
-  // this threshold's own gapHalf exactly, so the passage continues at
-  // the same width with no narrowing) - just a lintel above door height
-  // plus a simple stone frame to mark the opening, same family as the
-  // other doorway frames.
-  const farLintel = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf*2, ROOM11_H-DOOR_H), tWallMat.clone());
-  farLintel.position.set(cx, DOOR_H+(ROOM11_H-DOOR_H)/2, ROOM11_GATE_FAR_Z);
-  scene.add(farLintel);
-
-  const farFrameMat = new THREE.MeshStandardMaterial({color:0x22190f, roughness:0.9});
-  const farFrameSide = new THREE.BoxGeometry(0.2, DOOR_H+0.1, 0.16);
-  const ffl = new THREE.Mesh(farFrameSide, farFrameMat); ffl.position.set(cx-gapHalf, DOOR_H/2+0.05, ROOM11_GATE_FAR_Z);
-  const ffr = new THREE.Mesh(farFrameSide, farFrameMat); ffr.position.set(cx+gapHalf, DOOR_H/2+0.05, ROOM11_GATE_FAR_Z);
-  scene.add(ffl, ffr);
+  // the dead-end far wall - solid for now
+  const tFarWall = new THREE.Mesh(new THREE.PlaneGeometry(gapHalf*2, ROOM11_H), tWallMat.clone());
+  tFarWall.position.set(cx, ROOM11_H/2, ROOM11_GATE_FAR_Z);
+  scene.add(tFarWall);
 
   // a single guttering, colder lantern - deeper and lonelier feeling
   // than anything in room 11 proper
@@ -330,7 +319,6 @@ function buildRoom11Gate(){
   scene.add(web);
 
   // walkable zone for the threshold, overlapping back into room 11 so
-  // crossing the gate (once open) feels seamless, and slightly past its
-  // now-open far wall so the handoff into corridor12b is seamless too
-  obstacles.push({minX:cx-gapHalf, maxX:cx+gapHalf, minZ:ROOM11_GATE_FAR_Z-1.0, maxZ:ROOM11_NORTH_Z+0.5, isRoomBound:true});
+  // crossing the gate (once open) feels seamless
+  obstacles.push({minX:cx-gapHalf, maxX:cx+gapHalf, minZ:ROOM11_GATE_FAR_Z, maxZ:ROOM11_NORTH_Z+0.5, isRoomBound:true});
 }

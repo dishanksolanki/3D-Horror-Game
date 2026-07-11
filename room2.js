@@ -88,12 +88,16 @@ function buildRoom2(){
   ceil.position.set(cx, ROOM2_H, centerZ);
   scene.add(ceil);
 
-  // north (back) wall - opens into the room 11 wing via corridor11.
-  // FIX: this used to reference an undefined GATE6_GAPHALF. corridor11
-  // (built in engine.js's constants + room11.js) already connects to this
-  // exact wall using GATE11_GAPHALF, so we use that here too - the gap
-  // now lines up exactly with corridor11's own width on the other side.
-  const nGapHalf = GATE11_GAPHALF;
+  // north (back) wall - opens directly into room 6, the ancestor's shrine
+  // (no corridor). room6.js relies on this exact wall for its own south
+  // doorway - see the note in room6.js.
+  // FIX: this briefly referenced GATE11_GAPHALF and routed straight to
+  // corridor11/room11 instead, because GATE6_GAPHALF and the rest of the
+  // room6-10 chain were undefined at the time and silently failing.
+  // GATE6_GAPHALF is now defined in engine.js, so this wall goes back to
+  // being room 6's doorway, and corridor11 attaches further up the chain,
+  // off room 10's own north wall, exactly as room10.js's comments describe.
+  const nGapHalf = GATE6_GAPHALF;
   const nSideW = (ROOM2_W/2) - nGapHalf;
   const nTex = wallTexture(); nTex.repeat.set(1.4,1.5);
   const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02, side:THREE.DoubleSide});

@@ -1,82 +1,73 @@
 /* ============================================================
 HAVELI OF SHADOWS — MAIN
+
 Boots the whole haveli: builds every room in order, wires up
 controls, and starts the render loop.
+
 Load this file LAST, after engine.js, room1.js, room2.js,
-room3.js, room5.js, washroom1.js, room6.js, room7.js, room8.js,
-room9.js, room10.js, and room11.js.
+room3.js, washroom1.js, room11.js, room12.js, and room13.js.
 ============================================================ */
 
 function init(){
-  scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030304, 0.105);
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.05, 60);
-  pitchObject = new THREE.Object3D();
-  pitchObject.add(camera);
-  yawObject = new THREE.Object3D();
-  yawObject.position.set(0, 1.65, ROOM_D/2 - 2.2);
-  yawObject.add(pitchObject);
-  scene.add(yawObject);
+scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x030304, 0.105);
 
-  renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.72;
-  maxAniso = renderer.capabilities.getMaxAnisotropy();
-  document.body.appendChild(renderer.domElement);
+camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.05, 60);
+pitchObject = new THREE.Object3D();
+pitchObject.add(camera);
+yawObject = new THREE.Object3D();
+yawObject.position.set(0, 1.65, ROOM_D/2 - 2.2);
+yawObject.add(pitchObject);
+scene.add(yawObject);
 
-  clock = new THREE.Clock();
+renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.72;
+maxAniso = renderer.capabilities.getMaxAnisotropy();
+document.body.appendChild(renderer.domElement);
 
-  buildLighting();
-  buildRoomShell();
-  buildJharokhaWindow();
-  buildDoorway();
-  buildCharpai();
-  buildTrunk();
-  buildAlmirah();
-  buildTorch();
-  buildMirror();
-  buildBulb();
-  buildBell();
-  buildNicheIdol();
-  buildCobwebs();
-  buildBlood();
+clock = new THREE.Clock();
 
-  buildCorridor();
-  buildRoom2();
-  buildRoom2Furniture();
+buildLighting();
+buildRoomShell();
+buildJharokhaWindow();
+buildDoorway();
+buildCharpai();
+buildTrunk();
+buildAlmirah();
+buildMirror();
+buildBulb();
+buildBell();
+buildNicheIdol();
+buildCobwebs();
+buildBlood();
+buildCorridor();
+buildRoom2();
+buildRoom2Furniture();
+buildCorridor2();
+buildRoom3();
+buildRoom4();
 
-  buildCorridor2();
-  buildRoom3();
-  buildRoom5();
+// --- room 11 wing: off room 2's back wall, then east/west to 12 & 13 ---
+buildCorridor11();
+buildRoom11();
+buildRoom11Gate();
+buildCorridor12();
+buildRoom12();
+buildCorridor13();
+buildRoom13();
 
-  buildRoom4();
+window.addEventListener('resize', onResize);
+setupControls();
 
-  buildRoom6();
-  buildRoom7();
-  buildRoom8();
-
-  buildCorridor9();
-  buildRoom9();
-  buildRoom9Furniture();
-
-  buildRoom10();
-  buildRoom10Furniture();
-
-  buildCorridor11();
-  buildRoom11();
-  buildRoom11Gate();
-
-  window.addEventListener('resize', onResize);
-  setupControls();
-
-  const loading = document.getElementById('loading');
-  loading.style.opacity = 0;
-  setTimeout(()=>{ loading.style.display='none'; }, 650);
+const loading = document.getElementById('loading');
+loading.style.opacity = 0;
+setTimeout(()=>{ loading.style.display='none'; }, 650);
 }
 
 init();

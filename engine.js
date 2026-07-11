@@ -110,6 +110,11 @@ let bobTimer = 0;
 let audioCtx, droneGain;
 let almirahDrawers = [];
 let roomBoxes = [];
+
+// torch pickup (found in room 1's trunk) + the held torch once picked up
+let torchPickupGroup = null, torchPickupMeshes = [], torchPickupEmberLight = null;
+let heldTorchGroup = null, heldTorchFlame = null, heldTorchLight = null;
+let hasTorch = false, torchOn = false;
 let raycaster = new THREE.Raycaster();
 raycaster.far = 3.2;
 const screenCenter = new THREE.Vector2(0,0);
@@ -612,6 +617,7 @@ function setupControls(){
       case 'KeyS': case 'ArrowDown': moveB=true; break;
       case 'KeyA': case 'ArrowLeft': moveL=true; break;
       case 'KeyD': case 'ArrowRight': moveR=true; break;
+      case 'KeyF': if(hasTorch) toggleTorch(); break;
     }
   });
   document.addEventListener('keyup', (e)=>{
@@ -622,11 +628,20 @@ function setupControls(){
       case 'KeyD': case 'ArrowRight': moveR=false; break;
     }
   });
-  // click to open/close whichever almirah drawer the player is looking at
+  // click to pick up the torch, or open/close whichever almirah drawer / box the player is looking at
   document.addEventListener('mousedown', (e)=>{
     if(document.pointerLockElement !== document.body) return;
     if(e.button !== 0) return;
     raycaster.setFromCamera(screenCenter, camera);
+
+    if(!hasTorch && torchPickupMeshes.length){
+      const tHits = raycaster.intersectObjects(torchPickupMeshes, false);
+      if(tHits.length){
+        pickUpTorch();
+        return;
+      }
+    }
+
     const meshes = [];
     almirahDrawers.forEach(d=>{
       meshes.push(d.front, d.box, d.knob);
@@ -667,6 +682,80 @@ function startAudio(){
     noise.connect(filter); filter.connect(droneGain); droneGain.connect(audioCtx.destination);
     noise.start();
   }catch(e){ /* audio optional */ }
+}
+
+/* ---------------- torch pickup + held torch ---------------- */
+
+function pickUpTorch(){
+  hasTorch = true;
+  torchOn = true;
+  if(torchPickupGroup){
+    scene.remove(torchPickupGroup);
+    torchPickupGroup = null;
+  }
+  torchPickupMeshes = [];
+  torchPickupEmberLight = null;
+  buildHeldTorch();
+
+  const hint = document.getElementById('interact-hint');
+  if(hint){
+    hint.textContent = 'torch acquired — press F to toggle';
+    hint.style.opacity = 1;
+    clearTimeout(window.__torchHintTimeout);
+    window.__torchHintTimeout = setTimeout(()=>{ hint.style.opacity = 0; window.__torchHintTimeout = null; }, 2600);
+  }
+
+  const status = document.getElementById('torch-status');
+  if(status){ status.style.opacity = 1; status.textContent = 'torch: on'; }
+}
+
+function toggleTorch(){
+  torchOn = !torchOn;
+  if(heldTorchLight) heldTorchLight.visible = torchOn;
+  if(heldTorchFlame) heldTorchFlame.visible = torchOn;
+  const status = document.getElementById('torch-status');
+  if(status) status.textContent = torchOn ? 'torch: on' : 'torch: off';
+}
+
+function buildHeldTorch(){
+  const group = new THREE.Group();
+
+  const handleMat = new THREE.MeshStandardMaterial({color:0x3b2413, roughness:0.9});
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.028,0.42,10), handleMat);
+  group.add(handle);
+
+  const wrapMat = new THREE.MeshStandardMaterial({color:0x241609, roughness:1});
+  for(let i=0;i<4;i++){
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.028,0.007,6,10), wrapMat);
+    band.rotation.x = Math.PI/2;
+    band.position.y = -0.06 + i*0.05;
+    group.add(band);
+  }
+
+  const clothMat = new THREE.MeshStandardMaterial({color:0x4a3a24, roughness:1});
+  const cloth = new THREE.Mesh(new THREE.ConeGeometry(0.045,0.15,8), clothMat);
+  cloth.position.y = 0.27;
+  group.add(cloth);
+
+  const flameMat = new THREE.MeshStandardMaterial({color:0xffb14d, emissive:0xff8a1f, emissiveIntensity:1.8, roughness:0.4, transparent:true, opacity:0.92});
+  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.045,8,8), flameMat);
+  flame.position.y = 0.35;
+  flame.scale.set(0.8,1.3,0.8);
+  group.add(flame);
+  heldTorchFlame = flame;
+
+  const light = new THREE.PointLight(0xff9a3c, 1.3, 4.5, 2.0);
+  light.position.y = 0.35;
+  light.castShadow = true;
+  light.shadow.mapSize.set(256,256);
+  group.add(light);
+  heldTorchLight = light;
+
+  // held low and to the right of the camera, like a hand carrying it
+  group.position.set(0.32, -0.32, -0.5);
+  group.rotation.set(-0.15, 0.3, -0.35);
+  camera.add(group);
+  heldTorchGroup = group;
 }
 
 /* ---------------- collision + movement ---------------- */
@@ -769,6 +858,18 @@ function animate(){
     room10Light.intensity = 0.65 + Math.sin(t*3.1+2.1)*0.11 - r10Flicker;
   }
 
+  // torch: dim ember glow while it sits in the trunk, full flicker once carried
+  if(torchPickupEmberLight){
+    torchPickupEmberLight.intensity = 0.3 + Math.sin(t*2.6)*0.08;
+  }
+  if(heldTorchLight){
+    if(torchOn){
+      const flick = Math.sin(t*9)*0.18 + Math.sin(t*3.7)*0.12 + (Math.random()<0.05?Math.random()*0.3:0);
+      heldTorchLight.intensity = 1.3 + flick;
+      if(heldTorchFlame) heldTorchFlame.material.emissiveIntensity = 1.6 + flick*1.2;
+    }
+  }
+
   // bell sway
   if(bellPivot) bellPivot.rotation.z = Math.sin(t*0.8)*0.05;
 
@@ -789,9 +890,10 @@ function animate(){
     camera.position.x += (0-camera.position.x)*Math.min(1,dt*6);
   }
 
-  // almirah drawers sliding open/closed
-  if(almirahDrawers.length || roomBoxes.length){
+  // almirah drawers sliding open/closed, plus the torch pickup hint
+  if(almirahDrawers.length || roomBoxes.length || (!hasTorch && torchPickupMeshes.length)){
     let looking = false;
+    let lookingAtTorch = false;
     if(document.pointerLockElement === document.body){
       raycaster.setFromCamera(screenCenter, camera);
       const meshes = [];
@@ -800,10 +902,16 @@ function animate(){
         if(d.extraMeshes) meshes.push(...d.extraMeshes);
       });
       roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
-      looking = raycaster.intersectObjects(meshes, false).length > 0;
+      if(!hasTorch) meshes.push(...torchPickupMeshes);
+      const hoverHits = raycaster.intersectObjects(meshes, false);
+      looking = hoverHits.length > 0;
+      lookingAtTorch = looking && !!hoverHits[0].object.userData.isTorchPickup;
     }
     const hint = document.getElementById('interact-hint');
-    if(hint) hint.style.opacity = looking ? 1 : 0;
+    if(hint && !window.__torchHintTimeout){
+      hint.textContent = lookingAtTorch ? 'click to pick up torch' : 'click to open / close';
+      hint.style.opacity = looking ? 1 : 0;
+    }
 
     almirahDrawers.forEach(d=>{
       const target = d.isOpen ? d.openX : d.closedX;

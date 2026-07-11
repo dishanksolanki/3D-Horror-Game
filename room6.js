@@ -5,6 +5,13 @@
    Requires engine.js and room2.js to be loaded first (room2.js
    builds the shared doorway wall; this file only needs to add
    the other three walls, floor, ceiling, and furniture).
+
+   UPDATE: room6 is no longer a dead end on the east/west sides.
+   room7.js opens off this room's east wall and room8.js opens
+   off this room's west wall (see the notes in those files), so
+   both walls now carry a doorway gap (GATE7_GAPHALF / GATE8_GAPHALF,
+   both defined in engine.js) instead of being built solid.
+   Requires room7.js and room8.js to be loaded after this file.
 ============================================================ */
 function buildRoom6(){
   const cx = 0;
@@ -31,30 +38,83 @@ function buildRoom6(){
   northWall.position.set(cx, ROOM6_H/2, ROOM6_NORTH_Z);
   scene.add(northWall);
 
-  // east wall - solid, deliberately no further doorway (dead end)
-  const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM6_D, ROOM6_H), wallMat.clone());
-  eastWall.position.set(cx+ROOM6_W/2, ROOM6_H/2, centerZ);
-  eastWall.rotation.y = -Math.PI/2;
-  scene.add(eastWall);
+  // east wall - carries a doorway gap -> room 7, matching the
+  // panel+lintel+frame pattern used for every other doorway in the haveli
+  const eGapHalf = GATE7_GAPHALF;
+  const eSideD = (ROOM6_D/2) - eGapHalf;
+  const eTex = wallTexture(); eTex.repeat.set(1.4, 1.5);
+  const eMat = new THREE.MeshStandardMaterial({map:eTex, roughness:0.95, metalness:0.02});
 
-  // west wall - solid
-  const westWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM6_D, ROOM6_H), wallMat.clone());
-  westWall.position.set(cx-ROOM6_W/2, ROOM6_H/2, centerZ);
-  westWall.rotation.y = Math.PI/2;
-  scene.add(westWall);
+  const eNearPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM6_H), eMat);
+  eNearPanel.position.set(cx+ROOM6_W/2, ROOM6_H/2, centerZ-(eGapHalf+eSideD/2));
+  eNearPanel.rotation.y = -Math.PI/2;
+  scene.add(eNearPanel);
+
+  const eFarPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM6_H), eMat.clone());
+  eFarPanel.position.set(cx+ROOM6_W/2, ROOM6_H/2, centerZ+(eGapHalf+eSideD/2));
+  eFarPanel.rotation.y = -Math.PI/2;
+  scene.add(eFarPanel);
+
+  const eLintel = new THREE.Mesh(new THREE.PlaneGeometry(eGapHalf*2+0.4, ROOM6_H-DOOR_H), eMat.clone());
+  eLintel.position.set(cx+ROOM6_W/2, DOOR_H+(ROOM6_H-DOOR_H)/2, centerZ);
+  eLintel.rotation.y = -Math.PI/2;
+  scene.add(eLintel);
+
+  const eFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const eFrameSide = new THREE.BoxGeometry(0.3, DOOR_H+0.1, 0.18);
+  const efn = new THREE.Mesh(eFrameSide, eFrameMat); efn.position.set(cx+ROOM6_W/2, DOOR_H/2+0.05, centerZ-eGapHalf-0.09);
+  const efs = new THREE.Mesh(eFrameSide, eFrameMat); efs.position.set(cx+ROOM6_W/2, DOOR_H/2+0.05, centerZ+eGapHalf+0.09);
+  const eft = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,eGapHalf*2+0.36), eFrameMat); eft.position.set(cx+ROOM6_W/2,DOOR_H+0.1,centerZ);
+  scene.add(efn,efs,eft);
+
+  // west wall - carries a doorway gap -> room 8, same pattern
+  const wGapHalf = GATE8_GAPHALF;
+  const wSideD = (ROOM6_D/2) - wGapHalf;
+  const wTex2 = wallTexture(); wTex2.repeat.set(1.4, 1.5);
+  const wMat2 = new THREE.MeshStandardMaterial({map:wTex2, roughness:0.95, metalness:0.02});
+
+  const wNearPanel = new THREE.Mesh(new THREE.PlaneGeometry(wSideD, ROOM6_H), wMat2);
+  wNearPanel.position.set(cx-ROOM6_W/2, ROOM6_H/2, centerZ-(wGapHalf+wSideD/2));
+  wNearPanel.rotation.y = Math.PI/2;
+  scene.add(wNearPanel);
+
+  const wFarPanel = new THREE.Mesh(new THREE.PlaneGeometry(wSideD, ROOM6_H), wMat2.clone());
+  wFarPanel.position.set(cx-ROOM6_W/2, ROOM6_H/2, centerZ+(wGapHalf+wSideD/2));
+  wFarPanel.rotation.y = Math.PI/2;
+  scene.add(wFarPanel);
+
+  const wLintel = new THREE.Mesh(new THREE.PlaneGeometry(wGapHalf*2+0.4, ROOM6_H-DOOR_H), wMat2.clone());
+  wLintel.position.set(cx-ROOM6_W/2, DOOR_H+(ROOM6_H-DOOR_H)/2, centerZ);
+  wLintel.rotation.y = Math.PI/2;
+  scene.add(wLintel);
+
+  const wFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const wFrameSide = new THREE.BoxGeometry(0.3, DOOR_H+0.1, 0.18);
+  const wfn = new THREE.Mesh(wFrameSide, wFrameMat); wfn.position.set(cx-ROOM6_W/2, DOOR_H/2+0.05, centerZ-wGapHalf-0.09);
+  const wfs = new THREE.Mesh(wFrameSide, wFrameMat); wfs.position.set(cx-ROOM6_W/2, DOOR_H/2+0.05, centerZ+wGapHalf+0.09);
+  const wft = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,wGapHalf*2+0.36), wFrameMat); wft.position.set(cx-ROOM6_W/2,DOOR_H+0.1,centerZ);
+  scene.add(wfn,wfs,wft);
 
   // note: the south wall (the doorway back into room 2) is built once, by
   // buildRoom2() in room2.js, so it isn't duplicated here.
 
-  // baseboard trim along the three solid walls - the south threshold trim
-  // is already laid down by room 2's own doorway construction
+  // baseboard trim - the north wall trim runs solid (no doorway there);
+  // the east/west trims are split either side of their new doorway gaps
+  // instead of running solid across the whole wall. The south threshold
+  // trim is already laid down by room 2's own doorway construction.
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
   const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM6_W,0.15,0.1), trimMat);
   trimN.position.set(cx,0.08,ROOM6_NORTH_Z); scene.add(trimN);
-  const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM6_D), trimMat);
-  trimE.position.set(cx+ROOM6_W/2,0.08,centerZ); scene.add(trimE);
-  const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM6_D), trimMat);
-  trimW.position.set(cx-ROOM6_W/2,0.08,centerZ); scene.add(trimW);
+
+  const trimENear = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,eSideD), trimMat);
+  trimENear.position.set(cx+ROOM6_W/2,0.08,centerZ-(eGapHalf+eSideD/2)); scene.add(trimENear);
+  const trimEFar = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,eSideD), trimMat);
+  trimEFar.position.set(cx+ROOM6_W/2,0.08,centerZ+(eGapHalf+eSideD/2)); scene.add(trimEFar);
+
+  const trimWNear = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,wSideD), trimMat);
+  trimWNear.position.set(cx-ROOM6_W/2,0.08,centerZ-(wGapHalf+wSideD/2)); scene.add(trimWNear);
+  const trimWFar = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,wSideD), trimMat);
+  trimWFar.position.set(cx-ROOM6_W/2,0.08,centerZ+(wGapHalf+wSideD/2)); scene.add(trimWFar);
 
   // dim, unsteady oil-lamp glow is the only light source in the shrine
   const glow = new THREE.PointLight(0xff9a3d, 0.55, 5, 2.4);

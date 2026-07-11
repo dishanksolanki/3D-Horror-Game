@@ -753,14 +753,23 @@ function toggleTorch(){
 }
 
 function buildHeldTorch(){
+  // Built as two nested groups:
+  //  - "barrel": all the physical parts (body, bezel, lens, switch...),
+  //    modeled pointing up along +Y, same as the old torch/flame was built.
+  //  - "group" (outer, camera-attached): rotates that whole barrel -90°
+  //    around X so it points along -Z — straight out in front of the
+  //    camera, exactly like holding a real torch out in front of you and
+  //    aiming it where you're looking, instead of up and off to the side.
   const group = new THREE.Group();
+  const barrel = new THREE.Group();
+  group.add(barrel);
 
-  // rubberized aluminium body (was the wooden shaft)
+  // rubberized aluminium body
   const bodyMat = new THREE.MeshStandardMaterial({map:flashlightBodyTexture(), roughness:0.75, metalness:0.35});
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.024,0.028,0.30,14), bodyMat);
   body.position.y = -0.02;
   body.castShadow = true;
-  group.add(body);
+  barrel.add(body);
 
   // dark rubber grip ridge rings along the handle
   const ridgeMat = new THREE.MeshStandardMaterial({color:0x151719, roughness:0.9});
@@ -768,38 +777,38 @@ function buildHeldTorch(){
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.026,0.005,6,12), ridgeMat);
     ring.rotation.x = Math.PI/2;
     ring.position.y = -0.14 + i*0.05;
-    group.add(ring);
+    barrel.add(ring);
   }
 
-  // chrome bezel / head, wider than the body (was the tar-cloth head)
+  // chrome bezel / head, wider than the body
   const bezelMat = new THREE.MeshStandardMaterial({color:0xc7ccd1, metalness:0.9, roughness:0.25});
   const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.042,0.03,0.06,16), bezelMat);
   bezel.position.y = 0.16;
   bezel.castShadow = true;
-  group.add(bezel);
+  barrel.add(bezel);
 
   // reflector cone tucked just behind the lens
   const reflectorMat = new THREE.MeshStandardMaterial({color:0xdfe3e6, metalness:0.95, roughness:0.15, side:THREE.DoubleSide});
   const reflector = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.018,0.05,16), reflectorMat);
   reflector.position.y = 0.135;
-  group.add(reflector);
+  barrel.add(reflector);
 
-  // glass lens - dim when off, bright cool-white when on
+  // glass lens - dim when off, bright cool-white when on. Faces forward
+  // (+Y in barrel space -> -Z / straight ahead once the barrel is rotated).
   const lensMat = new THREE.MeshStandardMaterial({color:0xdfe8f2, emissive:0xdfe8f5, emissiveIntensity:1.6, roughness:0.15, metalness:0.1, transparent:true, opacity:0.95});
   const lens = new THREE.Mesh(new THREE.CircleGeometry(0.04,16), lensMat);
   lens.position.y = 0.19;
   lens.rotation.x = -Math.PI/2;
-  group.add(lens);
+  barrel.add(lens);
   heldTorchLensMesh = lens;
 
   // soft additive glow sprite over the lens, for a bit of bloom when lit
-  // (replaces the old two-layer fire sprite)
   const glowTex = softDotTexture();
   const glowMat = new THREE.SpriteMaterial({map:glowTex, color:0xcfe4ff, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
   const glow = new THREE.Sprite(glowMat);
   glow.scale.set(0.16,0.16,1);
   glow.position.y = 0.19;
-  group.add(glow);
+  barrel.add(glow);
   heldTorchLensGlow = glow;
 
   // small rubber on/off switch button on the side of the body, lit green
@@ -808,7 +817,7 @@ function buildHeldTorch(){
   const switchBtn = new THREE.Mesh(new THREE.CylinderGeometry(0.007,0.007,0.006,10), switchMat);
   switchBtn.rotation.x = Math.PI/2;
   switchBtn.position.set(0.026, -0.02, 0);
-  group.add(switchBtn);
+  barrel.add(switchBtn);
   heldTorchSwitch = switchBtn;
 
   // hand strap loop at the base
@@ -816,24 +825,31 @@ function buildHeldTorch(){
   const strap = new THREE.Mesh(new THREE.TorusGeometry(0.02,0.004,6,12), strapMat);
   strap.position.y = -0.17;
   strap.rotation.x = Math.PI/2;
-  group.add(strap);
+  barrel.add(strap);
 
-  // the real light source - a focused, steady, cool-white spotlight beam
-  // (replaces the warm, heavily-flickered fire PointLight)
-  const light = new THREE.SpotLight(0xdfe8ff, 2.2, 9, Math.PI/8.5, 0.45, 1.6);
+  // the real light source - a focused, steady, cool-white spotlight beam,
+  // sitting right at the lens and firing straight out through it
+  const light = new THREE.SpotLight(0xdfe8ff, 3.2, 14, Math.PI/9, 0.35, 1.4);
   light.position.y = 0.19;
   light.castShadow = true;
   light.shadow.mapSize.set(512,512);
-  group.add(light);
+  light.shadow.camera.near = 0.05;
+  light.shadow.camera.far = 14;
+  barrel.add(light);
   const target = new THREE.Object3D();
-  target.position.set(0, 3.2, 0); // aims out through the lens, same axis the old flame sat on
-  group.add(target);
+  target.position.set(0, 4.5, 0); // straight out past the lens (barrel-local +Y)
+  barrel.add(target);
   light.target = target;
   heldTorchLight = light;
 
-  // held low and to the right of the camera, like a hand carrying it
-  group.position.set(0.3, -0.35, -0.5);
-  group.rotation.set(-0.2, 0.3, -0.35);
+  // point the whole barrel straight ahead (-Z, the camera's forward axis)
+  barrel.rotation.x = -Math.PI/2;
+
+  // held out low-right, close to the camera, with only a tiny natural
+  // hand-tremor tilt — NOT the big fixed tilt the old torch had, so the
+  // beam actually lands where you're looking instead of off to one side
+  group.position.set(0.22, -0.22, -0.35);
+  group.rotation.set(0.02, 0.04, 0);
   camera.add(group);
   heldTorchGroup = group;
 }

@@ -33,10 +33,36 @@ function buildRoom6(){
   ceil.position.set(cx, ROOM6_H, centerZ);
   scene.add(ceil);
 
-  // north wall - solid, backs the shrine altar
-  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM6_W, ROOM6_H), wallMat);
-  northWall.position.set(cx, ROOM6_H/2, ROOM6_NORTH_Z);
-  scene.add(northWall);
+  // north wall - carries a doorway gap -> corridor9 -> room 9 (the hall).
+  // This used to be built fully solid to back the shrine altar, but with
+  // the altar/furniture removed there's nothing left to back, and
+  // corridor9.js/room9.js both expect this exact wall to already have a
+  // gap sized to GATE9_GAPHALF (defined in engine.js) - without it, the
+  // entire room9/10/11/12 chain is unreachable no matter how correctly
+  // those files are built, since they all hang off this one doorway.
+  const nGapHalf = GATE9_GAPHALF;
+  const nSideW = (ROOM6_W/2) - nGapHalf;
+  const nTex = wallTexture(); nTex.repeat.set(3, 1.4);
+  const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02});
+
+  const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM6_H), nMat);
+  nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM6_H/2, ROOM6_NORTH_Z);
+  scene.add(nLeftPanel);
+
+  const nRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM6_H), nMat.clone());
+  nRightPanel.position.set(cx+(nGapHalf+nSideW/2), ROOM6_H/2, ROOM6_NORTH_Z);
+  scene.add(nRightPanel);
+
+  const nLintel = new THREE.Mesh(new THREE.PlaneGeometry(nGapHalf*2+0.4, ROOM6_H-DOOR_H), nMat.clone());
+  nLintel.position.set(cx, DOOR_H+(ROOM6_H-DOOR_H)/2, ROOM6_NORTH_Z);
+  scene.add(nLintel);
+
+  const nFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const nFrameSide = new THREE.BoxGeometry(0.24, DOOR_H+0.1, 0.16);
+  const nfl = new THREE.Mesh(nFrameSide, nFrameMat); nfl.position.set(cx-nGapHalf-0.1, DOOR_H/2+0.05, ROOM6_NORTH_Z);
+  const nfr = new THREE.Mesh(nFrameSide, nFrameMat); nfr.position.set(cx+nGapHalf+0.1, DOOR_H/2+0.05, ROOM6_NORTH_Z);
+  const nft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); nft.position.set(cx, DOOR_H+0.1, ROOM6_NORTH_Z);
+  scene.add(nfl,nfr,nft);
 
   // east wall - carries a doorway gap -> room 7, matching the
   // panel+lintel+frame pattern used for every other doorway in the haveli
@@ -98,13 +124,15 @@ function buildRoom6(){
   // note: the south wall (the doorway back into room 2) is built once, by
   // buildRoom2() in room2.js, so it isn't duplicated here.
 
-  // baseboard trim - the north wall trim runs solid (no doorway there);
-  // the east/west trims are split either side of their new doorway gaps
+  // baseboard trim - all three built walls (north, east, west) now carry
+  // doorway gaps, so each trim run is split either side of its gap
   // instead of running solid across the whole wall. The south threshold
   // trim is already laid down by room 2's own doorway construction.
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM6_W,0.15,0.1), trimMat);
-  trimN.position.set(cx,0.08,ROOM6_NORTH_Z); scene.add(trimN);
+  const trimNL = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM6_NORTH_Z); scene.add(trimNL);
+  const trimNR = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNR.position.set(cx+(nGapHalf+nSideW/2),0.08,ROOM6_NORTH_Z); scene.add(trimNR);
 
   const trimENear = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,eSideD), trimMat);
   trimENear.position.set(cx+ROOM6_W/2,0.08,centerZ-(eGapHalf+eSideD/2)); scene.add(trimENear);

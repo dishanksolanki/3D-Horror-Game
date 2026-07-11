@@ -741,10 +741,8 @@ function buildTorch(){
   box.add(group);
 
   const meshes = group.children.filter(m=>m.isMesh);
-  meshes.forEach(m=>{ m.userData.isTorchPickup = true; });
-  torchPickupMeshes = meshes;
-  torchPickupGroup = group;
-  torchPickupLED = ledLight;
+  registerPickupItem(group, meshes, 'electric torch', pickUpTorch);
+  torchPickupLED = ledLight; // just the decorative standby-blink light, not part of the pickup interaction
 }
 
 

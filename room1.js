@@ -682,6 +682,68 @@ function buildTrunk(){
 }
 
 
+function buildTorch(){
+  // a wooden torch found resting inside room 1's trunk, lid nudged ajar as if
+  // someone dug it out in a hurry - the player's first usable light source.
+  const trunkPos = new THREE.Vector3(-ROOM_W/2 + 1.0, 0.26, -0.85);
+
+  // the lid, propped open at an angle instead of sitting flush shut
+  const ajarLid = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.05, 0.5),
+    new THREE.MeshStandardMaterial({color:0x1f130a, roughness:0.85}));
+  ajarLid.position.set(trunkPos.x - 0.42, 0.62, trunkPos.z - 0.16);
+  ajarLid.rotation.z = -0.85;
+  ajarLid.castShadow = true;
+  scene.add(ajarLid);
+
+  const group = new THREE.Group();
+
+  const handleMat = new THREE.MeshStandardMaterial({color:0x3b2413, roughness:0.9});
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.03,0.46,10), handleMat);
+  handle.rotation.z = Math.PI/2.3;
+  handle.castShadow = true;
+  group.add(handle);
+
+  // leather wrap bands along the handle
+  const wrapMat = new THREE.MeshStandardMaterial({color:0x241609, roughness:1});
+  for(let i=0;i<4;i++){
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.032,0.008,6,10), wrapMat);
+    band.rotation.y = Math.PI/2;
+    band.position.set(0.13 - i*0.05, 0.22 - i*0.065, 0);
+    group.add(band);
+  }
+
+  // tar-soaked rag head
+  const clothMat = new THREE.MeshStandardMaterial({color:0x4a3a24, roughness:1});
+  const cloth = new THREE.Mesh(new THREE.ConeGeometry(0.055,0.18,8), clothMat);
+  cloth.position.set(0.24,0.33,0);
+  cloth.rotation.z = -0.2;
+  cloth.castShadow = true;
+  group.add(cloth);
+
+  // small unlit ember nub, so it reads as an unlit torch waiting to be carried
+  const flameMat = new THREE.MeshStandardMaterial({color:0x8a5a28, emissive:0x3a1c08, emissiveIntensity:0.6, roughness:0.6});
+  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.035,8,8), flameMat);
+  flame.position.set(0.32,0.4,0);
+  flame.scale.set(0.8,1.2,0.8);
+  group.add(flame);
+
+  const emberLight = new THREE.PointLight(0xff8a3c, 0.35, 1.4, 2.2);
+  emberLight.position.copy(flame.position);
+  group.add(emberLight);
+
+  group.position.set(trunkPos.x - 0.55, 0.58, trunkPos.z - 0.05);
+  group.rotation.y = 0.65;
+  group.rotation.z = 0.25;
+  scene.add(group);
+
+  const meshes = group.children.filter(m=>m.isMesh);
+  meshes.forEach(m=>{ m.userData.isTorchPickup = true; });
+  torchPickupMeshes = meshes;
+  torchPickupGroup = group;
+  torchPickupEmberLight = emberLight;
+}
+
+
 function buildAlmirah(){
   // an ornate old wooden almirah standing against the east wall, south of the
   // window - built as a proper haveli-carpentry showpiece: fine wood grain,

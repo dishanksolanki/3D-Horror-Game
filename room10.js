@@ -59,11 +59,33 @@ function buildRoom10(){
   const nft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); nft.position.set(cx, DOOR_H+0.1, ROOM10_NORTH_Z);
   scene.add(nfl, nfr, nft);
 
-  // east wall - solid
-  const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM10_D, ROOM10_H), wallMat.clone());
-  eastWall.position.set(cx+ROOM10_W/2, ROOM10_H/2, centerZ);
-  eastWall.rotation.y = -Math.PI/2;
-  scene.add(eastWall);
+  // east wall - now carries a doorway gap (GATE12A_GAPHALF) leading into
+  // corridor12a and, beyond it, room 12. Centered on room10's own
+  // mid-height (z), matching corridor12a's first leg exactly.
+  const eGapHalf = GATE12A_GAPHALF;
+  const eSideD = (ROOM10_D/2) - eGapHalf;
+  const eTex = wallTexture(); eTex.repeat.set(1.5,1.6);
+  const eMat = new THREE.MeshStandardMaterial({map:eTex, roughness:0.95, metalness:0.02});
+  const eNearPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM10_H), eMat);
+  eNearPanel.position.set(cx+ROOM10_W/2, ROOM10_H/2, centerZ-(eGapHalf+eSideD/2));
+  eNearPanel.rotation.y = -Math.PI/2;
+  scene.add(eNearPanel);
+  const eFarPanel = new THREE.Mesh(new THREE.PlaneGeometry(eSideD, ROOM10_H), eMat.clone());
+  eFarPanel.position.set(cx+ROOM10_W/2, ROOM10_H/2, centerZ+(eGapHalf+eSideD/2));
+  eFarPanel.rotation.y = -Math.PI/2;
+  scene.add(eFarPanel);
+  const eLintel = new THREE.Mesh(new THREE.PlaneGeometry(eGapHalf*2+0.4, ROOM10_H-DOOR_H), eMat.clone());
+  eLintel.position.set(cx+ROOM10_W/2, DOOR_H+(ROOM10_H-DOOR_H)/2, centerZ);
+  eLintel.rotation.y = -Math.PI/2;
+  scene.add(eLintel);
+  // carved wooden door frame around the new opening, same family as the
+  // other doorway frames in this room
+  const eFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const eFrameSide = new THREE.BoxGeometry(0.16, DOOR_H+0.1, 0.24);
+  const efn = new THREE.Mesh(eFrameSide, eFrameMat); efn.position.set(cx+ROOM10_W/2, DOOR_H/2+0.05, centerZ-eGapHalf-0.1);
+  const eff = new THREE.Mesh(eFrameSide, eFrameMat); eff.position.set(cx+ROOM10_W/2, DOOR_H/2+0.05, centerZ+eGapHalf+0.1);
+  const eft = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.18, eGapHalf*2+0.32), eFrameMat); eft.position.set(cx+ROOM10_W/2, DOOR_H+0.1, centerZ);
+  scene.add(efn,eff,eft);
 
   // west wall - solid
   const westWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM10_D, ROOM10_H), wallMat.clone());
@@ -114,8 +136,10 @@ function buildRoom10(){
   trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM10_NORTH_Z); scene.add(trimNL);
   const trimNR = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
   trimNR.position.set(cx+(nGapHalf+nSideW/2),0.08,ROOM10_NORTH_Z); scene.add(trimNR);
-  const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM10_D), trimMat);
-  trimE.position.set(cx+ROOM10_W/2,0.08,centerZ); scene.add(trimE);
+  const trimEN = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,eSideD), trimMat);
+  trimEN.position.set(cx+ROOM10_W/2,0.08,centerZ-(eGapHalf+eSideD/2)); scene.add(trimEN);
+  const trimES = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,eSideD), trimMat);
+  trimES.position.set(cx+ROOM10_W/2,0.08,centerZ+(eGapHalf+eSideD/2)); scene.add(trimES);
   const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM10_D), trimMat);
   trimW.position.set(cx-ROOM10_W/2,0.08,centerZ); scene.add(trimW);
 

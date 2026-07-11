@@ -67,7 +67,7 @@ function init(){
   buildRoom10();
   buildRoom10Furniture();
 
-  buildCorridor11();
+ 
   buildRoom11();
   buildRoom11Gate();
 

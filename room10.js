@@ -5,6 +5,9 @@
    its panels INTO room 9; this file draws room 10's own south wall
    panels facing back INTO room 10, so the doorway looks correct
    and solid from both sides (planes only render from one face).
+   Room 10's own north wall now ALSO carries a doorway gap, leading
+   into the short 0.25m corridor11 connector and on to room 11 (see
+   room11.js, which builds corridor11 and room 11 itself).
    Requires engine.js and room9.js to be loaded first.
    ============================================================ */
 
@@ -27,10 +30,34 @@ function buildRoom10(){
   ceil.position.set(cx, ROOM10_H, centerZ);
   scene.add(ceil);
 
-  // north wall - solid, dead end for now
-  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM10_W, ROOM10_H), wallMat.clone());
-  northWall.position.set(cx, ROOM10_H/2, ROOM10_NORTH_Z);
-  scene.add(northWall);
+  // north wall - now carries a doorway gap into corridor11/room 11
+  // (was a solid dead-end). Matches GATE11_GAPHALF exactly so corridor11's
+  // own south-facing panels (built in room11.js) line up seamlessly with
+  // these north-facing ones.
+  const nGapHalf = GATE11_GAPHALF;
+  const nSideW = (ROOM10_W/2) - nGapHalf;
+  const nTex = wallTexture(); nTex.repeat.set(1.6,1.6);
+  const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02});
+
+  const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM10_H), nMat);
+  nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM10_H/2, ROOM10_NORTH_Z);
+  scene.add(nLeftPanel);
+
+  const nRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM10_H), nMat.clone());
+  nRightPanel.position.set(cx+(nGapHalf+nSideW/2), ROOM10_H/2, ROOM10_NORTH_Z);
+  scene.add(nRightPanel);
+
+  const nLintel = new THREE.Mesh(new THREE.PlaneGeometry(nGapHalf*2+0.4, ROOM10_H-DOOR_H), nMat.clone());
+  nLintel.position.set(cx, DOOR_H+(ROOM10_H-DOOR_H)/2, ROOM10_NORTH_Z);
+  scene.add(nLintel);
+
+  // carved wooden door frame on room 10's side of this new opening
+  const nFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const nFrameSide = new THREE.BoxGeometry(0.24, DOOR_H+0.1, 0.16);
+  const nfl = new THREE.Mesh(nFrameSide, nFrameMat); nfl.position.set(cx-nGapHalf-0.1, DOOR_H/2+0.05, ROOM10_NORTH_Z);
+  const nfr = new THREE.Mesh(nFrameSide, nFrameMat); nfr.position.set(cx+nGapHalf+0.1, DOOR_H/2+0.05, ROOM10_NORTH_Z);
+  const nft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); nft.position.set(cx, DOOR_H+0.1, ROOM10_NORTH_Z);
+  scene.add(nfl, nfr, nft);
 
   // east wall - solid
   const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM10_D, ROOM10_H), wallMat.clone());
@@ -83,8 +110,10 @@ function buildRoom10(){
   trimSL.position.set(cx-(gapHalf+sideW/2),0.08,ROOM10_SOUTH_Z); scene.add(trimSL);
   const trimSR = new THREE.Mesh(new THREE.BoxGeometry(sideW,0.15,0.1), trimMat);
   trimSR.position.set(cx+(gapHalf+sideW/2),0.08,ROOM10_SOUTH_Z); scene.add(trimSR);
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM10_W,0.15,0.1), trimMat);
-  trimN.position.set(cx,0.08,ROOM10_NORTH_Z); scene.add(trimN);
+  const trimNL = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM10_NORTH_Z); scene.add(trimNL);
+  const trimNR = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNR.position.set(cx+(nGapHalf+nSideW/2),0.08,ROOM10_NORTH_Z); scene.add(trimNR);
   const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM10_D), trimMat);
   trimE.position.set(cx+ROOM10_W/2,0.08,centerZ); scene.add(trimE);
   const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM10_D), trimMat);
@@ -108,10 +137,18 @@ function buildRoom10(){
   fan(1.1, [cx+ROOM10_W/2-0.05, ROOM10_H-0.04, ROOM10_NORTH_Z+0.05], [0, -Math.PI/4+Math.PI/2, 0], 7, 0.25);
 
   // walkable zone - tight to room 10's own real walls (no padding), so
-  // the solid north/east/west wall panels actually block movement. The
-  // doorway crossing into room 9 is handled by the bridge zone room9.js
-  // pushes across the shared gap, so no separate bridge is needed here.
+  // the solid east/west wall panels and the solid stretches either side
+  // of both doorways actually block movement. The doorway crossing into
+  // room 9 (south) is handled by the bridge zone room9.js pushes across
+  // that shared gap; the new doorway north into corridor11 gets its own
+  // bridge zone just below.
   obstacles.push({minX:cx-ROOM10_W/2, maxX:cx+ROOM10_W/2, minZ:ROOM10_NORTH_Z, maxZ:ROOM10_SOUTH_Z, isRoomBound:true});
+
+  // doorway bridge -> corridor11 (north wall gap only). Direct, no room-
+  // spanning corridor sits inside room10 itself, so - like room9's own
+  // north bridge into room10 - a narrow zone spanning just the gap's
+  // width is pushed here, overlapping into both room10 and corridor11.
+  obstacles.push({minX:cx-nGapHalf, maxX:cx+nGapHalf, minZ:ROOM10_NORTH_Z-1.0, maxZ:ROOM10_NORTH_Z+1.0, isRoomBound:true});
 }
 
 /* ---------------- room 10 furniture ---------------- */
@@ -120,13 +157,14 @@ function buildRoom10Furniture(){
   const cx = 0;
 
   // --- a heavy, dust-sheeted piece of furniture pushed against the
-  // north wall, the room's one real feature so far ---
+  // north wall's west corner (shifted off-centre so it doesn't block
+  // the new doorway gap into corridor11/room 11) ---
   const sheetMat = new THREE.MeshStandardMaterial({color:0x3a3428, roughness:0.95});
   const sheet = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 0.7), sheetMat);
-  sheet.position.set(cx, 0.5, ROOM10_NORTH_Z+0.5);
+  sheet.position.set(cx-2.2, 0.5, ROOM10_NORTH_Z+0.5);
   sheet.castShadow = true; sheet.receiveShadow = true;
   scene.add(sheet);
-  obstacles.push(boxFor(new THREE.Vector3(cx,0,ROOM10_NORTH_Z+0.5), 0.85, 0.4, 0.08));
+  obstacles.push(boxFor(new THREE.Vector3(cx-2.2,0,ROOM10_NORTH_Z+0.5), 0.85, 0.4, 0.08));
 
   // --- a broken chair on its side near the east wall ---
   const woodMat = new THREE.MeshStandardMaterial({color:0x2a1c10, roughness:0.85});

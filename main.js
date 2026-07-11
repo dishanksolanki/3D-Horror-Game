@@ -4,7 +4,7 @@ Boots the whole haveli: builds every room in order, wires up
 controls, and starts the render loop.
 Load this file LAST, after engine.js, room1.js, room2.js,
 room3.js, room5.js, washroom1.js, room6.js, room7.js, room8.js,
-room9.js, room10.js, room11.js, and room12.js.
+room9.js, room10.js, and room11.js.
 ============================================================ */
 
 function init(){
@@ -70,10 +70,6 @@ function init(){
   buildCorridor11();
   buildRoom11();
   buildRoom11Gate();
-
-  buildCorridor12a();
-  buildCorridor12b();
-  buildRoom12();
 
   window.addEventListener('resize', onResize);
   setupControls();

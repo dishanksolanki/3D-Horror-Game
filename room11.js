@@ -68,9 +68,7 @@ function init(){
   buildRoom10Furniture();
 
  
-  buildRoom11();
-  buildRoom11Gate();
-
+ 
   window.addEventListener('resize', onResize);
   setupControls();
 

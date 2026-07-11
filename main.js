@@ -49,6 +49,7 @@ safeBuild('buildDoorway', buildDoorway);
 safeBuild('buildCharpai', buildCharpai);
 safeBuild('buildTrunk', buildTrunk);
 safeBuild('buildAlmirah', buildAlmirah);
+safeBuild('buildTorch', buildTorch);
 safeBuild('buildMirror', buildMirror);
 safeBuild('buildBulb', buildBulb);
 safeBuild('buildBell', buildBell);

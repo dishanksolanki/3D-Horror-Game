@@ -135,6 +135,19 @@ function buildRoom6(){
   // walkable zone, overlapping south into room 2 so the shared doorway
   // feels seamless in both directions
   obstacles.push({minX:cx-ROOM6_W/2, maxX:cx+ROOM6_W/2, minZ:ROOM6_NORTH_Z, maxZ:ROOM6_SOUTH_Z+1.0, isRoomBound:true});
+
+  // doorway bridge -> room 7 (east wall gap only). room6's own zone and
+  // room7's own zone both stop exactly at this shared wall with no
+  // overlap, which (given PLAYER_R) leaves a dead strip neither zone
+  // covers - the player is never "inside" anything right at the
+  // threshold, so tryMove() silently refuses to move them through. This
+  // narrow bridge, restricted to the gap's width and overlapping 1m into
+  // each room, closes that gap - same technique as room9's bridge into
+  // room10.
+  obstacles.push({minX:cx+ROOM6_W/2-1.0, maxX:cx+ROOM6_W/2+1.0, minZ:centerZ-eGapHalf, maxZ:centerZ+eGapHalf, isRoomBound:true});
+
+  // doorway bridge -> room 8 (west wall gap only), same reasoning
+  obstacles.push({minX:cx-ROOM6_W/2-1.0, maxX:cx-ROOM6_W/2+1.0, minZ:centerZ-wGapHalf, maxZ:centerZ+wGapHalf, isRoomBound:true});
 }
 
 /* ---------------- room 6 shrine props (removed) ----------------

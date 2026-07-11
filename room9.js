@@ -76,8 +76,9 @@ function buildCorridor9(){
 
 function buildRoom9(){
   // room 9: the hall. Reached only via corridor9, off room 6's north
-  // wall. North, east, and west walls are solid dead ends for now - the
-  // south wall carries the only doorway, matching corridor9's width.
+  // wall. East and west walls are solid dead ends for now - the south
+  // wall carries the doorway back to corridor9, and the north wall now
+  // carries a second doorway straight through into room 10.
   const cx = 0;
   const centerZ = (ROOM9_SOUTH_Z + ROOM9_NORTH_Z)/2;
   const wTex = wallTexture(); wTex.repeat.set(5, 1.7);
@@ -96,10 +97,35 @@ function buildRoom9(){
   ceil.position.set(cx, ROOM9_H, centerZ);
   scene.add(ceil);
 
-  // north wall - solid, dead end for now
-  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM9_W, ROOM9_H), wallMat.clone());
-  northWall.position.set(cx, ROOM9_H/2, ROOM9_NORTH_Z);
-  scene.add(northWall);
+  // north wall - now carries a doorway gap into room 10 (was a solid
+  // dead-end). This is a DIRECT wall-shared doorway, not through a
+  // corridor, so room 10 draws its own matching south-wall panels facing
+  // back into this same gap (see room10.js) - a single shared wall would
+  // only render from whichever side built it, since planes are one-sided.
+  const nGapHalf = GATE10_GAPHALF;
+  const nSideW = (ROOM9_W/2) - nGapHalf;
+  const nTex = wallTexture(); nTex.repeat.set(1.6,1.7);
+  const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02});
+
+  const nLeftPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM9_H), nMat);
+  nLeftPanel.position.set(cx-(nGapHalf+nSideW/2), ROOM9_H/2, ROOM9_NORTH_Z);
+  scene.add(nLeftPanel);
+
+  const nRightPanel = new THREE.Mesh(new THREE.PlaneGeometry(nSideW, ROOM9_H), nMat.clone());
+  nRightPanel.position.set(cx+(nGapHalf+nSideW/2), ROOM9_H/2, ROOM9_NORTH_Z);
+  scene.add(nRightPanel);
+
+  const nLintel = new THREE.Mesh(new THREE.PlaneGeometry(nGapHalf*2+0.4, ROOM9_H-DOOR_H), nMat.clone());
+  nLintel.position.set(cx, DOOR_H+(ROOM9_H-DOOR_H)/2, ROOM9_NORTH_Z);
+  scene.add(nLintel);
+
+  // carved wooden door frame on room 9's side of the opening
+  const nFrameMat = new THREE.MeshStandardMaterial({color:0x2a1a0e, roughness:0.85});
+  const nFrameSide = new THREE.BoxGeometry(0.24, DOOR_H+0.1, 0.16);
+  const nfl = new THREE.Mesh(nFrameSide, nFrameMat); nfl.position.set(cx-nGapHalf-0.1, DOOR_H/2+0.05, ROOM9_NORTH_Z);
+  const nfr = new THREE.Mesh(nFrameSide, nFrameMat); nfr.position.set(cx+nGapHalf+0.1, DOOR_H/2+0.05, ROOM9_NORTH_Z);
+  const nft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); nft.position.set(cx, DOOR_H+0.1, ROOM9_NORTH_Z);
+  scene.add(nfl, nfr, nft);
 
   // east wall - solid
   const eastWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM9_D, ROOM9_H), wallMat.clone());
@@ -143,10 +169,13 @@ function buildRoom9(){
   const ft = new THREE.Mesh(new THREE.BoxGeometry(gapHalf*2+0.44, 0.2, 0.34), frameMat); ft.position.set(cx, DOOR_H+0.12, ROOM9_SOUTH_Z);
   scene.add(fl,fr,ft);
 
-  // baseboard trim along the three solid walls
+  // baseboard trim - north trim now splits either side of the room 10
+  // doorway instead of running solid across the whole wall
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM9_W,0.15,0.1), trimMat);
-  trimN.position.set(cx,0.08,ROOM9_NORTH_Z); scene.add(trimN);
+  const trimNL = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM9_NORTH_Z); scene.add(trimNL);
+  const trimNR = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
+  trimNR.position.set(cx+(nGapHalf+nSideW/2),0.08,ROOM9_NORTH_Z); scene.add(trimNR);
   const trimE = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM9_D), trimMat);
   trimE.position.set(cx+ROOM9_W/2,0.08,centerZ); scene.add(trimE);
   const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM9_D), trimMat);
@@ -173,9 +202,16 @@ function buildRoom9(){
   fan(1.2, [cx+ROOM9_W/2-0.05, ROOM9_H-0.04, ROOM9_NORTH_Z+0.05], [0, -Math.PI/4+Math.PI/2, 0], 8, 0.2);
 
   // walkable zone - tight to room 9's own real walls (no padding), so
-  // the solid north/east/west wall panels actually block movement and
-  // the player can only leave the way they came in
+  // the solid east/west wall panels and the solid stretches either side
+  // of both doorways actually block movement
   obstacles.push({minX:cx-ROOM9_W/2, maxX:cx+ROOM9_W/2, minZ:ROOM9_NORTH_Z, maxZ:ROOM9_SOUTH_Z, isRoomBound:true});
+
+  // doorway bridge -> room 10 (north wall gap only). This is a direct,
+  // no-corridor doorway, so - like room3's bridge into room5 - a narrow
+  // zone spanning only the gap's width is pushed here, overlapping 1m
+  // into each room, so the solid wall panels on either side of the gap
+  // stay impassable while the gap itself feels seamless to cross.
+  obstacles.push({minX:cx-nGapHalf, maxX:cx+nGapHalf, minZ:ROOM9_NORTH_Z-1.0, maxZ:ROOM9_NORTH_Z+1.0, isRoomBound:true});
 }
 
 /* ---------------- room 9 hall furniture ---------------- */

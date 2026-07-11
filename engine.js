@@ -114,6 +114,14 @@ const ROOM11_W = 5.0, ROOM11_D = 5.4, ROOM11_H = 2.9;
 const ROOM11_SOUTH_Z = CORR11_NORTH_Z; // room 11's south wall (doorway) z
 const ROOM11_NORTH_Z = ROOM11_SOUTH_Z - ROOM11_D;
 
+/* ---- room 11's gate: an openable/closable door set into room 11's own
+   north wall - the wall directly OPPOSITE its room10/corridor11
+   connection on the south side. Beyond it sits a short, foggy dead-end
+   threshold, left unbuilt-out for now (ready for a future room 12). ---- */
+const ROOM11_GATE_GAPHALF = 0.8;
+const ROOM11_GATE_DEPTH = 1.8; // how far the little threshold beyond the gate runs
+const ROOM11_GATE_FAR_Z = ROOM11_NORTH_Z - ROOM11_GATE_DEPTH; // the dead-end wall beyond the gate
+
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
 let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light, corridor11Light, room11Light;
 let moonSpot, windowShaft;
@@ -122,6 +130,7 @@ let bobTimer = 0;
 let audioCtx, droneGain;
 let almirahDrawers = [];
 let roomBoxes = [];
+let gates = []; // interactive hinged doors (open/close), rotating on the Y axis
 
 // electric torch (flashlight) pickup (found in room 1's trunk) + the held
 // torch once picked up
@@ -747,6 +756,7 @@ function setupControls(){
       if(d.extraMeshes) meshes.push(...d.extraMeshes);
     });
     roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
+    gates.forEach(g=>meshes.push(g.doorMesh, g.handle));
     const hits = raycaster.intersectObjects(meshes, false);
     if(hits.length){
       const hit = hits[0].object.userData;
@@ -756,6 +766,9 @@ function setupControls(){
       } else if(hit.boxIndex !== undefined){
         const b = roomBoxes[hit.boxIndex];
         b.isOpen = !b.isOpen;
+      } else if(hit.gateIndex !== undefined){
+        const g = gates[hit.gateIndex];
+        g.isOpen = !g.isOpen;
       }
     }
   });
@@ -929,9 +942,13 @@ function tryMove(dx, dz){
     newZ > z.minZ+PLAYER_R && newZ < z.maxZ-PLAYER_R
   );
   if(!inside) return;
-  // block against furniture/pillars
+  // block against furniture/pillars (and closed gates - a gate obstacle
+  // is skipped once its door has actually swung open past a small
+  // threshold, so the collision follows the visible door rather than
+  // just the isOpen flag)
   for(const o of obstacles){
     if(o.isRoomBound) continue;
+    if(o.isGate && o.gateRef && Math.abs(o.gateRef.current) > 0.15) continue;
     if(newX > o.minX-PLAYER_R && newX < o.maxX+PLAYER_R && newZ > o.minZ-PLAYER_R && newZ < o.maxZ+PLAYER_R){
       return;
     }
@@ -1067,7 +1084,7 @@ function animate(){
   }
 
   // almirah drawers sliding open/closed, plus the interact/pickup hint
-  if(almirahDrawers.length || roomBoxes.length || pickupItems.length){
+  if(almirahDrawers.length || roomBoxes.length || pickupItems.length || gates.length){
     let looking = false;
     let lookingAtPickup = false;
     let pickupLabel = '';
@@ -1089,6 +1106,7 @@ function animate(){
           if(d.extraMeshes) meshes.push(...d.extraMeshes);
         });
         roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
+        gates.forEach(g=>meshes.push(g.doorMesh, g.handle));
         const hoverHits = raycaster.intersectObjects(meshes, false);
         looking = hoverHits.length > 0;
       }
@@ -1125,6 +1143,14 @@ function animate(){
       const target = b.isOpen ? b.openAngle : 0;
       b.current += (target - b.current) * Math.min(1, dt*4.5);
       b.hingePivot.rotation.x = b.current;
+    });
+
+    // gates (e.g. room 11's), hinged open/closed on the vertical (Y)
+    // axis like a real swinging door, same smooth ease as the above
+    gates.forEach(g=>{
+      const target = g.isOpen ? g.openAngle : 0;
+      g.current += (target - g.current) * Math.min(1, dt*4.5);
+      g.hingePivot.rotation.y = g.current;
     });
   }
 

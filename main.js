@@ -3,7 +3,8 @@ HAVELI OF SHADOWS — MAIN
 Boots the whole haveli: builds every room in order, wires up
 controls, and starts the render loop.
 Load this file LAST, after engine.js, room1.js, room2.js,
-room3.js, washroom1.js, room11.js, room12.js, and room13.js.
+room3.js, room5.js, room6.js, room7.js, room8.js, room9.js,
+room10.js, washroom1.js, room11.js, room12.js, and room13.js.
 ============================================================ */
 
 // FIX: each build function used to be called directly, so the moment any
@@ -62,8 +63,22 @@ safeBuild('buildRoom2Furniture', buildRoom2Furniture);
 safeBuild('buildCorridor2', buildCorridor2);
 safeBuild('buildRoom3', buildRoom3);
 safeBuild('buildRoom4', buildRoom4);
+safeBuild('buildRoom5', buildRoom5);
 
-// --- room 11 wing: off room 2's back wall, then east/west to 12 & 13 ---
+// --- shrine wing: off room 2's north wall, then the hall chain up to room 10 ---
+safeBuild('buildRoom6', buildRoom6);
+safeBuild('buildRoom6Furniture', buildRoom6Furniture);
+safeBuild('buildRoom7', buildRoom7);
+safeBuild('buildRoom7Furniture', buildRoom7Furniture);
+safeBuild('buildRoom8', buildRoom8);
+safeBuild('buildRoom8Furniture', buildRoom8Furniture);
+safeBuild('buildCorridor9', buildCorridor9);
+safeBuild('buildRoom9', buildRoom9);
+safeBuild('buildRoom9Furniture', buildRoom9Furniture);
+safeBuild('buildRoom10', buildRoom10);
+safeBuild('buildRoom10Furniture', buildRoom10Furniture);
+
+// --- room 11 wing: off room 10's back wall, then east/west to 12 & 13 ---
 safeBuild('buildCorridor11', buildCorridor11);
 safeBuild('buildRoom11', buildRoom11);
 safeBuild('buildRoom11Gate', buildRoom11Gate);

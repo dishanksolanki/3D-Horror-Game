@@ -683,10 +683,10 @@ function buildTrunk(){
 
 
 function buildTorch(){
-  // a wooden torch found resting inside room 1's almirah, tucked in the
-  // middle drawer that's already sitting ajar - the player's first usable
-  // light source. Must be called AFTER buildAlmirah() since it attaches to
-  // that drawer's interior box mesh.
+  // an electric torch (flashlight) found resting inside room 1's almirah,
+  // tucked in the middle drawer that's already sitting ajar - the player's
+  // first usable light source. Must be called AFTER buildAlmirah() since it
+  // attaches to that drawer's interior box mesh.
   const drawer = almirahDrawers[1];
   if(!drawer){ return; } // safety: shouldn't happen given build order in main.js
   const box = drawer.box;
@@ -696,57 +696,55 @@ function buildTorch(){
 
   const group = new THREE.Group();
 
-  const shaftMat = new THREE.MeshStandardMaterial({map:torchShaftTexture(), roughness:0.92});
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.026,0.42,10), shaftMat);
-  group.add(shaft);
+  // rubberized aluminium body
+  const bodyMat = new THREE.MeshStandardMaterial({map:flashlightBodyTexture(), roughness:0.75, metalness:0.35});
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.024,0.028,0.30,14), bodyMat);
+  body.position.y = -0.02;
+  group.add(body);
 
-  const wrapMat = new THREE.MeshStandardMaterial({color:0x1c1108, roughness:1});
+  const ridgeMat = new THREE.MeshStandardMaterial({color:0x151719, roughness:0.9});
   for(let i=0;i<3;i++){
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.024,0.006,6,10), wrapMat);
-    band.rotation.x = Math.PI/2;
-    band.position.y = -0.14 + i*0.05;
-    group.add(band);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.026,0.005,6,12), ridgeMat);
+    ring.rotation.x = Math.PI/2;
+    ring.position.y = -0.14 + i*0.05;
+    group.add(ring);
   }
 
-  const clothMat = new THREE.MeshStandardMaterial({map:charredClothTexture(), roughness:1});
-  const cloth = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,0.16,12,1,true), clothMat);
-  cloth.position.y = 0.25;
-  group.add(cloth);
+  // chrome bezel / head
+  const bezelMat = new THREE.MeshStandardMaterial({color:0xc7ccd1, metalness:0.9, roughness:0.25});
+  const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.042,0.03,0.06,16), bezelMat);
+  bezel.position.y = 0.16;
+  group.add(bezel);
 
-  const strandMat = new THREE.MeshStandardMaterial({color:0x241a0e, roughness:1, side:THREE.DoubleSide});
-  for(let i=0;i<6;i++){
-    const a = (i/6)*Math.PI*2 + Math.random()*0.4;
-    const strip = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 0.05+Math.random()*0.025), strandMat);
-    strip.position.set(Math.cos(a)*0.032, 0.32, Math.sin(a)*0.032);
-    strip.rotation.y = -a;
-    strip.rotation.x = (Math.random()-0.5)*0.4;
-    group.add(strip);
-  }
+  // dark, unlit lens - it isn't switched on until carried
+  const lensMat = new THREE.MeshStandardMaterial({color:0x2a3138, emissive:0x1a2530, emissiveIntensity:0.4, roughness:0.2, metalness:0.2});
+  const lens = new THREE.Mesh(new THREE.CircleGeometry(0.04,16), lensMat);
+  lens.position.y = 0.19;
+  lens.rotation.x = -Math.PI/2;
+  group.add(lens);
 
-  // a small dim ember rather than a full flame - it isn't lit until carried
-  const flameTex = flameTexture();
-  const emberMat = new THREE.SpriteMaterial({map:flameTex, color:0xff8a3c, opacity:0.55, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
-  const ember = new THREE.Sprite(emberMat);
-  ember.scale.set(0.08,0.12,1);
-  ember.position.y = 0.34;
-  group.add(ember);
+  // a tiny standby LED near the switch, rather than a glowing fire ember
+  const ledMat = new THREE.MeshStandardMaterial({color:0x0a2a0a, emissive:0x22ff44, emissiveIntensity:0.5, roughness:0.5});
+  const led = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.005,10), ledMat);
+  led.rotation.x = Math.PI/2;
+  led.position.set(0.026, -0.02, 0);
+  group.add(led);
 
-  const emberLight = new THREE.PointLight(0xff8a3c, 0.3, 1.3, 2.2);
-  emberLight.position.y = 0.34;
-  group.add(emberLight);
+  const ledLight = new THREE.PointLight(0x33ff55, 0.2, 0.6, 2.2);
+  ledLight.position.set(0.026, -0.02, 0);
+  group.add(ledLight);
 
-  // lay the torch on its side inside the drawer (width-wise, where there's
-  // the most room), resting near the top of the drawer's interior
+  // lay the flashlight on its side inside the drawer (width-wise, where
+  // there's the most room), resting near the top of the drawer's interior
   group.rotation.x = Math.PI/2;
   group.position.set(bw*0.05, bh/2 - 0.03, bd*0.08);
   box.add(group);
 
   const meshes = group.children.filter(m=>m.isMesh);
   meshes.forEach(m=>{ m.userData.isTorchPickup = true; });
-  ember.userData.isTorchPickup = true;
-  torchPickupMeshes = [...meshes, ember];
+  torchPickupMeshes = meshes;
   torchPickupGroup = group;
-  torchPickupEmberLight = emberLight;
+  torchPickupLED = ledLight;
 }
 
 

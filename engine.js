@@ -5,8 +5,8 @@
    lighting helpers, player controls, movement/collision,
    and the render loop.
    Loaded BEFORE the room1.js / room2.js / room3.js /
-   washroom1.js files, and BEFORE main.js.
-============================================================ */
+   washroom1.js / room6.js files, and BEFORE main.js.
+   ============================================================ */
 
 let scene, camera, renderer, clock;
 let yawObject, pitchObject;
@@ -38,7 +38,6 @@ const CORR2_SOUTH_Z = ROOM2_CENTER_Z - CORR2_GAPHALF; // branch corridor's south
 const CORR2_NORTH_Z = ROOM2_CENTER_Z + CORR2_GAPHALF; // branch corridor's north wall z
 const CORR2_WEST_X = ROOM2_W/2; // starts right at room 2's east wall
 const CORR2_EAST_X = CORR2_WEST_X + CORR2_LEN; // ends here -> room 3's west doorway
-
 const ROOM3_W = 5.2, ROOM3_D = 5.6, ROOM3_H = 3.05;
 const ROOM3_WEST_X = CORR2_EAST_X; // room 3's west wall (doorway) x
 const ROOM3_EAST_X = ROOM3_WEST_X + ROOM3_W;
@@ -52,11 +51,59 @@ const ROOM4_EAST_X = -ROOM2_W/2; // shares room 2's own west wall
 const ROOM4_WEST_X = ROOM4_EAST_X - ROOM4_W;
 const ROOM4_CENTER_Z = ROOM2_CENTER_Z; // doorway centered on room 2's z-axis
 
-/* ---- room 6: a small ancestral shrine opening off room 2's north wall ---- */
-const GATE6_GAPHALF = 0.55; // narrow, older doorway befitting a shrine
+/* ---- room 5: opens directly off room 3's east wall, no corridor in
+   between - straight-through doorway aligned with room 3's own z-axis ---- */
+const ROOM5_GAPHALF = 0.75;
+const ROOM5_D = 4.6, ROOM5_W = 4.0, ROOM5_H = 2.95; // D = x-extent (width), W = z-extent (depth)
+const ROOM5_WEST_X = ROOM3_EAST_X; // shares room 3's own east wall
+const ROOM5_EAST_X = ROOM5_WEST_X + ROOM5_D;
+const ROOM5_CENTER_Z = ROOM3_CENTER_Z; // straight-through alignment with room 3
+
+/* ---- room 6: a small ancestral shrine opening directly off room 2's
+   north (back) wall - the "future rooms can open through it" dead-end
+   from room 2's shell finally opens up here ---- */
+const GATE6_GAPHALF = 0.75;
+const ROOM6_W = 4.2, ROOM6_D = 4.6, ROOM6_H = 2.9;
+const ROOM6_SOUTH_Z = ROOM2_NORTH_Z; // shares room 2's own north wall
+const ROOM6_NORTH_Z = ROOM6_SOUTH_Z - ROOM6_D; // room 6's back wall z
+
+/* ---- room 7: ordinary bedroom, opens off room 6's east wall ---- */
+const GATE7_GAPHALF = 0.6;
+const ROOM7_W = 5.6, ROOM7_D = 5.2, ROOM7_H = ROOM6_H;
+const ROOM7_WEST_X = ROOM6_W/2; // shares room 6's own east wall
+const ROOM7_EAST_X = ROOM7_WEST_X + ROOM7_W;
+const ROOM7_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // aligned with room 6
+
+/* ---- room 8: storeroom, opens off room 6's west wall ---- */
+const GATE8_GAPHALF = 0.6;
+const ROOM8_W = 5.6, ROOM8_D = 5.2, ROOM8_H = ROOM6_H;
+const ROOM8_EAST_X = -ROOM6_W/2; // shares room 6's own west wall
+const ROOM8_WEST_X = ROOM8_EAST_X - ROOM8_W;
+const ROOM8_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // aligned with room 6
+
+/* ---- room 9: a grand hall connected to room 6's north wall by a short
+   2-metre stone corridor (corridor9), the same way room 1 connects to
+   room 2 - NOT a direct through-the-wall doorway like rooms 6/7/8 ---- */
+const GATE9_GAPHALF = 1.0; // wide, grand doorway befitting a hall
+const CORR9_LEN = 2.0, CORR9_W = GATE9_GAPHALF*2, CORR9_H = 2.5;
+const CORR9_SOUTH_Z = ROOM6_NORTH_Z; // corridor starts at room 6's own north wall
+const CORR9_NORTH_Z = CORR9_SOUTH_Z - CORR9_LEN; // corridor ends here
+const ROOM9_W = 7.0, ROOM9_D = 9.0, ROOM9_H = 3.4;
+const ROOM9_SOUTH_Z = CORR9_NORTH_Z; // room 9's south wall (doorway) z
+const ROOM9_NORTH_Z = ROOM9_SOUTH_Z - ROOM9_D;
+
+/* ---- room 10: a second hall, opening DIRECTLY off room 9's own north
+   wall - no corridor this time. Each room draws its own wall panels at
+   the shared doorway (rather than one room's wall doing double duty),
+   since PlaneGeometry only renders from one side - a single shared wall
+   would be invisible/see-through from whichever room didn't build it. ---- */
+const GATE10_GAPHALF = 0.9;
+const ROOM10_W = 6.4, ROOM10_D = 7.0, ROOM10_H = 3.2;
+const ROOM10_SOUTH_Z = ROOM9_NORTH_Z; // shares room 9's own north wall
+const ROOM10_NORTH_Z = ROOM10_SOUTH_Z - ROOM10_D;
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -64,55 +111,16 @@ let audioCtx, droneGain;
 let almirahDrawers = [];
 let roomBoxes = [];
 
+// torch pickup (found in room 1's trunk) + the held torch once picked up
+let torchPickupGroup = null, torchPickupMeshes = [], torchPickupEmberLight = null;
+let heldTorchGroup = null, heldTorchFlame = null, heldTorchFlameCore = null, heldTorchLight = null;
+let hasTorch = false, torchOn = false;
 let raycaster = new THREE.Raycaster();
 raycaster.far = 3.2;
 const screenCenter = new THREE.Vector2(0,0);
 
-/* ---------------- flashlight (normal handheld torch) ---------------- */
-let flashlightSpot, flashlightMesh, flashlightOn = false;
-
-function buildFlashlight(){
-  // the actual light source — plain warm-white beam, like a real torch
-  flashlightSpot = new THREE.SpotLight(0xfff2d0, 0, 8, THREE.MathUtils.degToRad(28), 0.35, 1.2);
-  flashlightSpot.visible = false;
-  camera.add(flashlightSpot);
-  camera.add(flashlightSpot.target);
-  flashlightSpot.position.set(0, 0, 0);
-  flashlightSpot.target.position.set(0, 0, -1);
-
-  // simple torch model held at bottom-right of the view
-  flashlightMesh = new THREE.Group();
-
-  const bodyMat = new THREE.MeshStandardMaterial({color:0x2b2b2b, metalness:0.6, roughness:0.4});
-  const headMat = new THREE.MeshStandardMaterial({color:0x1a1a1a, metalness:0.7, roughness:0.35});
-  const lensMat = new THREE.MeshStandardMaterial({color:0xfff2d0, emissive:0xfff2d0, emissiveIntensity:0, roughness:0.2});
-
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.14,16), bodyMat);
-  barrel.rotation.x = Math.PI/2;
-
-  const head = new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.02,0.035,16), headMat);
-  head.rotation.x = Math.PI/2;
-  head.position.z = -0.085;
-
-  const lens = new THREE.Mesh(new THREE.CircleGeometry(0.024,16), lensMat);
-  lens.position.z = -0.103;
-
-  flashlightMesh.add(barrel, head, lens);
-  flashlightMesh.userData.lensMat = lensMat;
-
-  flashlightMesh.position.set(0.18, -0.16, -0.35);
-  flashlightMesh.rotation.y = -0.08;
-  camera.add(flashlightMesh);
-}
-
-function toggleFlashlight(){
-  flashlightOn = !flashlightOn;
-  flashlightSpot.visible = flashlightOn;
-  flashlightSpot.intensity = flashlightOn ? 1.6 : 0;
-  flashlightMesh.userData.lensMat.emissiveIntensity = flashlightOn ? 1.4 : 0;
-}
-
 /* ---------------- procedural textures ---------------- */
+
 function makeCanvas(w,h){
   const c = document.createElement('canvas'); c.width=w; c.height=h;
   return c;
@@ -501,16 +509,17 @@ function woodTexture(baseColor, darkColor){
 }
 
 /* ---------------- almirah detail textures ---------------- */
+
 function buildLighting(){
   const amb = new THREE.AmbientLight(0x1a140d, 0.22);
   scene.add(amb);
-
   const moon = new THREE.DirectionalLight(0x2a3550, 0.12);
   moon.position.set(-6, 8, -4);
   scene.add(moon);
 }
 
 /* ---------------- shell ---------------- */
+
 function cobwebTextureVariant(density, tornAmount){
   // a variant cobweb generator with adjustable thread density and a
   // torn/ragged look, so webs scattered through the room don't all
@@ -581,14 +590,104 @@ function boxFor(pos, hx, hz, pad){
   return {minX:pos.x-hx-pad, maxX:pos.x+hx+pad, minZ:pos.z-hz-pad, maxZ:pos.z+hz+pad};
 }
 
+function flameTexture(){
+  // a soft, layered fire silhouette (hot white core -> orange -> red, fading
+  // to nothing) for a billboarded sprite flame, rather than a flat sphere
+  const S = 128;
+  const c = makeCanvas(S,S), ctx = c.getContext('2d');
+  ctx.clearRect(0,0,S,S);
+  const cx = S/2, cy = S*0.6;
+  // outer body of the flame
+  const outer = ctx.createRadialGradient(cx,cy,2,cx,cy,S*0.48);
+  outer.addColorStop(0,   'rgba(255,240,200,0.95)');
+  outer.addColorStop(0.28,'rgba(255,190,80,0.85)');
+  outer.addColorStop(0.6, 'rgba(255,110,25,0.5)');
+  outer.addColorStop(1,   'rgba(200,40,10,0)');
+  ctx.fillStyle = outer;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, S*0.32, S*0.46, 0, 0, Math.PI*2);
+  ctx.fill();
+  // tapered tongue reaching up toward the tip
+  const tip = ctx.createRadialGradient(cx, S*0.22, 1, cx, S*0.22, S*0.24);
+  tip.addColorStop(0,'rgba(255,255,235,0.95)');
+  tip.addColorStop(0.5,'rgba(255,200,90,0.6)');
+  tip.addColorStop(1,'rgba(255,150,40,0)');
+  ctx.fillStyle = tip;
+  ctx.beginPath();
+  ctx.ellipse(cx, S*0.3, S*0.13, S*0.22, 0, 0, Math.PI*2);
+  ctx.fill();
+  // hot blue-white base where the flame meets the fuel
+  const base = ctx.createRadialGradient(cx, S*0.82, 1, cx, S*0.82, S*0.16);
+  base.addColorStop(0,'rgba(255,255,255,0.9)');
+  base.addColorStop(1,'rgba(255,200,100,0)');
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.ellipse(cx, S*0.82, S*0.14, S*0.1, 0, 0, Math.PI*2);
+  ctx.fill();
+  return new THREE.CanvasTexture(c);
+}
+
+function torchShaftTexture(){
+  // a small tileable wood-grain texture for the torch's handle, dark and
+  // charred toward the top where it meets the burning cloth head
+  const S = 128;
+  const c = makeCanvas(S,S), ctx = c.getContext('2d');
+  ctx.fillStyle = '#3b2413'; ctx.fillRect(0,0,S,S);
+  for(let i=0;i<50;i++){
+    const x = Math.random()*S;
+    ctx.strokeStyle = `rgba(18,9,4,${0.08+Math.random()*0.2})`;
+    ctx.lineWidth = 0.6+Math.random()*1.3;
+    ctx.beginPath();
+    ctx.moveTo(x,0);
+    ctx.lineTo(x+(Math.random()-0.5)*10, S);
+    ctx.stroke();
+  }
+  for(let i=0;i<600;i++){
+    ctx.fillStyle = `rgba(10,5,2,${Math.random()*0.12})`;
+    ctx.fillRect(Math.random()*S, Math.random()*S, 1,1);
+  }
+  const g = ctx.createLinearGradient(0,0,0,S*0.4);
+  g.addColorStop(0,'rgba(8,5,3,0.95)');
+  g.addColorStop(1,'rgba(8,5,3,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,S,S*0.4);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function charredClothTexture(){
+  // tar-soaked rag wrap: woven fibre lines, soot speckle, and a burnt-black
+  // fringe along the top edge where it's been alight
+  const S = 128;
+  const c = makeCanvas(S,S), ctx = c.getContext('2d');
+  ctx.fillStyle = '#4a3a24'; ctx.fillRect(0,0,S,S);
+  ctx.strokeStyle = 'rgba(20,14,8,0.35)'; ctx.lineWidth = 1;
+  for(let i=0;i<S;i+=5){
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(S,i); ctx.stroke();
+  }
+  for(let i=0;i<500;i++){
+    ctx.fillStyle = `rgba(10,6,3,${Math.random()*0.35})`;
+    ctx.fillRect(Math.random()*S, Math.random()*S, 1,1);
+  }
+  const g = ctx.createLinearGradient(0,0,0,S*0.45);
+  g.addColorStop(0,'rgba(4,2,1,1)');
+  g.addColorStop(1,'rgba(4,2,1,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,S,S*0.45);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
 /* ---------------- controls ---------------- */
+
 function setupControls(){
   const overlay = document.getElementById('overlay');
   overlay.addEventListener('click', ()=>{
     document.body.requestPointerLock();
     startAudio();
   });
-
   document.addEventListener('pointerlockchange', ()=>{
     if(document.pointerLockElement === document.body){
       overlay.style.opacity = 0; overlay.style.pointerEvents='none';
@@ -596,24 +695,21 @@ function setupControls(){
       overlay.style.opacity = 1; overlay.style.pointerEvents='auto';
     }
   });
-
   document.addEventListener('mousemove', (e)=>{
     if(document.pointerLockElement !== document.body) return;
     yawObject.rotation.y -= e.movementX * 0.0022;
     pitchObject.rotation.x -= e.movementY * 0.0022;
     pitchObject.rotation.x = Math.max(-1.3, Math.min(1.3, pitchObject.rotation.x));
   });
-
   document.addEventListener('keydown', (e)=>{
     switch(e.code){
       case 'KeyW': case 'ArrowUp': moveF=true; break;
       case 'KeyS': case 'ArrowDown': moveB=true; break;
       case 'KeyA': case 'ArrowLeft': moveL=true; break;
       case 'KeyD': case 'ArrowRight': moveR=true; break;
-      case 'KeyF': toggleFlashlight(); break;
+      case 'KeyF': if(hasTorch) toggleTorch(); break;
     }
   });
-
   document.addEventListener('keyup', (e)=>{
     switch(e.code){
       case 'KeyW': case 'ArrowUp': moveF=false; break;
@@ -622,12 +718,20 @@ function setupControls(){
       case 'KeyD': case 'ArrowRight': moveR=false; break;
     }
   });
-
-  // click to open/close whichever almirah drawer the player is looking at
+  // click to pick up the torch, or open/close whichever almirah drawer / box the player is looking at
   document.addEventListener('mousedown', (e)=>{
     if(document.pointerLockElement !== document.body) return;
     if(e.button !== 0) return;
     raycaster.setFromCamera(screenCenter, camera);
+
+    if(!hasTorch && torchPickupMeshes.length){
+      const tHits = raycaster.intersectObjects(torchPickupMeshes, false);
+      if(tHits.length){
+        pickUpTorch();
+        return;
+      }
+    }
+
     const meshes = [];
     almirahDrawers.forEach(d=>{
       meshes.push(d.front, d.box, d.knob);
@@ -670,11 +774,111 @@ function startAudio(){
   }catch(e){ /* audio optional */ }
 }
 
+/* ---------------- torch pickup + held torch ---------------- */
+
+function pickUpTorch(){
+  hasTorch = true;
+  torchOn = true;
+  if(torchPickupGroup){
+    if(torchPickupGroup.parent) torchPickupGroup.parent.remove(torchPickupGroup);
+    torchPickupGroup = null;
+  }
+  torchPickupMeshes = [];
+  torchPickupEmberLight = null;
+  buildHeldTorch();
+
+  const hint = document.getElementById('interact-hint');
+  if(hint){
+    hint.textContent = 'torch acquired — press F to toggle';
+    hint.style.opacity = 1;
+    clearTimeout(window.__torchHintTimeout);
+    window.__torchHintTimeout = setTimeout(()=>{ hint.style.opacity = 0; window.__torchHintTimeout = null; }, 2600);
+  }
+
+  const status = document.getElementById('torch-status');
+  if(status){ status.style.opacity = 1; status.textContent = 'torch: on'; }
+}
+
+function toggleTorch(){
+  torchOn = !torchOn;
+  if(heldTorchLight) heldTorchLight.visible = torchOn;
+  if(heldTorchFlame) heldTorchFlame.visible = torchOn;
+  if(heldTorchFlameCore) heldTorchFlameCore.visible = torchOn;
+  const status = document.getElementById('torch-status');
+  if(status) status.textContent = torchOn ? 'torch: on' : 'torch: off';
+}
+
+function buildHeldTorch(){
+  const group = new THREE.Group();
+
+  // tapered wooden shaft, charred near the top where the head burns
+  const shaftMat = new THREE.MeshStandardMaterial({map:torchShaftTexture(), roughness:0.92});
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.026,0.42,10), shaftMat);
+  shaft.castShadow = true;
+  group.add(shaft);
+
+  // leather wrap bands along the grip
+  const wrapMat = new THREE.MeshStandardMaterial({color:0x1c1108, roughness:1});
+  for(let i=0;i<3;i++){
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.024,0.006,6,10), wrapMat);
+    band.rotation.x = Math.PI/2;
+    band.position.y = -0.14 + i*0.05;
+    group.add(band);
+  }
+
+  // tar-soaked rag head, wrapped thicker than the shaft
+  const clothMat = new THREE.MeshStandardMaterial({map:charredClothTexture(), roughness:1});
+  const cloth = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,0.16,12,1,true), clothMat);
+  cloth.position.y = 0.25;
+  group.add(cloth);
+
+  // a few frayed strips of rag poking out unevenly around the top
+  const strandMat = new THREE.MeshStandardMaterial({color:0x241a0e, roughness:1, side:THREE.DoubleSide});
+  for(let i=0;i<6;i++){
+    const a = (i/6)*Math.PI*2 + Math.random()*0.4;
+    const strip = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 0.06+Math.random()*0.03), strandMat);
+    strip.position.set(Math.cos(a)*0.032, 0.33, Math.sin(a)*0.032);
+    strip.rotation.y = -a;
+    strip.rotation.x = (Math.random()-0.5)*0.4;
+    group.add(strip);
+  }
+
+  // real flame: two layered, billboarded, additive-blended sprites so it
+  // reads as soft glowing fire instead of a solid lit-up ball
+  const flameTex = flameTexture();
+  const flameMat = new THREE.SpriteMaterial({map:flameTex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+  const flame = new THREE.Sprite(flameMat);
+  flame.scale.set(0.24,0.34,1);
+  flame.position.y = 0.42;
+  group.add(flame);
+  heldTorchFlame = flame;
+
+  const flameCore = new THREE.Sprite(flameMat.clone());
+  flameCore.scale.set(0.11,0.17,1);
+  flameCore.position.y = 0.39;
+  group.add(flameCore);
+  heldTorchFlameCore = flameCore;
+
+  // the real light source - warm, close-range, and heavily flickered in animate()
+  const light = new THREE.PointLight(0xff9a42, 1.7, 6, 2.0);
+  light.position.y = 0.42;
+  light.castShadow = true;
+  light.shadow.mapSize.set(256,256);
+  group.add(light);
+  heldTorchLight = light;
+
+  // held low and to the right of the camera, like a hand carrying it
+  group.position.set(0.3, -0.35, -0.5);
+  group.rotation.set(-0.2, 0.3, -0.35);
+  camera.add(group);
+  heldTorchGroup = group;
+}
+
 /* ---------------- collision + movement ---------------- */
+
 function tryMove(dx, dz){
   const newX = yawObject.position.x + dx;
   const newZ = yawObject.position.z + dz;
-
   // player must be inside at least one walkable zone (room1, the corridor,
   // room2, etc - each pushed as an isRoomBound entry). Zones are authored to
   // overlap slightly at doorways so movement between them is seamless.
@@ -684,7 +888,6 @@ function tryMove(dx, dz){
     newZ > z.minZ+PLAYER_R && newZ < z.maxZ-PLAYER_R
   );
   if(!inside) return;
-
   // block against furniture/pillars
   for(const o of obstacles){
     if(o.isRoomBound) continue;
@@ -692,12 +895,12 @@ function tryMove(dx, dz){
       return;
     }
   }
-
   yawObject.position.x = newX;
   yawObject.position.z = newZ;
 }
 
 /* ---------------- animate ---------------- */
+
 function animate(){
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
@@ -743,6 +946,57 @@ function animate(){
     room4Light.intensity = 0.55 + Math.sin(t*4.2)*0.09 - fFlicker;
   }
 
+  if(room5Light){
+    const r5Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    room5Light.intensity = 0.75 + Math.sin(t*3.0)*0.1 - r5Flicker;
+  }
+
+  if(room6Light){
+    // meant to feel like a cluster of unsteady oil lamps rather than a
+    // single bulb - a shorter, twitchier flicker cycle than the rest of
+    // the haveli's electric-style lights
+    const sFlicker = Math.random() < 0.06 ? Math.random()*0.3 : 0;
+    room6Light.intensity = 0.5 + Math.sin(t*5.4)*0.12 + Math.sin(t*1.7)*0.08 - sFlicker;
+  }
+
+  if(corridor9Light){
+    const c9Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    corridor9Light.intensity = 0.42 + Math.sin(t*2.1)*0.08 - c9Flicker;
+  }
+
+  if(room9Light){
+    const r9Flicker = Math.random() < 0.025 ? Math.random()*0.3 : 0;
+    room9Light.intensity = 0.7 + Math.sin(t*2.4+0.6)*0.1 - r9Flicker;
+  }
+
+  if(room10Light){
+    const r10Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    room10Light.intensity = 0.65 + Math.sin(t*3.1+2.1)*0.11 - r10Flicker;
+  }
+
+  // torch: dim ember glow while it sits in the drawer, real fire flicker once carried
+  if(torchPickupEmberLight){
+    torchPickupEmberLight.intensity = 0.3 + Math.sin(t*2.6)*0.08;
+  }
+  if(heldTorchLight && torchOn){
+    // layered sine noise + occasional random dips, like real firelight
+    const flick = Math.sin(t*11)*0.16 + Math.sin(t*4.3+1.7)*0.14 + Math.sin(t*23)*0.06
+      + (Math.random()<0.06 ? (Math.random()-0.5)*0.5 : 0);
+    heldTorchLight.intensity = 1.7 + flick;
+    heldTorchLight.position.x = Math.sin(t*17)*0.01;
+    heldTorchLight.position.z = Math.cos(t*13)*0.01;
+    if(heldTorchFlame){
+      const s = 1 + flick*0.18;
+      heldTorchFlame.scale.set(0.24*s, 0.34*(1+flick*0.12), 1);
+      heldTorchFlame.position.x = Math.sin(t*15)*0.012;
+    }
+    if(heldTorchFlameCore){
+      const s2 = 1 + flick*0.22;
+      heldTorchFlameCore.scale.set(0.11*s2, 0.17*(1+flick*0.16), 1);
+      heldTorchFlameCore.position.x = Math.sin(t*19+0.5)*0.008;
+    }
+  }
+
   // bell sway
   if(bellPivot) bellPivot.rotation.z = Math.sin(t*0.8)*0.05;
 
@@ -763,9 +1017,10 @@ function animate(){
     camera.position.x += (0-camera.position.x)*Math.min(1,dt*6);
   }
 
-  // almirah drawers sliding open/closed
-  if(almirahDrawers.length || roomBoxes.length){
+  // almirah drawers sliding open/closed, plus the torch pickup hint
+  if(almirahDrawers.length || roomBoxes.length || (!hasTorch && torchPickupMeshes.length)){
     let looking = false;
+    let lookingAtTorch = false;
     if(document.pointerLockElement === document.body){
       raycaster.setFromCamera(screenCenter, camera);
       const meshes = [];
@@ -774,10 +1029,16 @@ function animate(){
         if(d.extraMeshes) meshes.push(...d.extraMeshes);
       });
       roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
-      looking = raycaster.intersectObjects(meshes, false).length > 0;
+      if(!hasTorch) meshes.push(...torchPickupMeshes);
+      const hoverHits = raycaster.intersectObjects(meshes, false);
+      looking = hoverHits.length > 0;
+      lookingAtTorch = looking && !!hoverHits[0].object.userData.isTorchPickup;
     }
     const hint = document.getElementById('interact-hint');
-    if(hint) hint.style.opacity = looking ? 1 : 0;
+    if(hint && !window.__torchHintTimeout){
+      hint.textContent = lookingAtTorch ? 'click to pick up torch' : 'click to open / close';
+      hint.style.opacity = looking ? 1 : 0;
+    }
 
     almirahDrawers.forEach(d=>{
       const target = d.isOpen ? d.openX : d.closedX;

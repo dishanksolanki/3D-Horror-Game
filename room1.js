@@ -683,62 +683,68 @@ function buildTrunk(){
 
 
 function buildTorch(){
-  // a wooden torch found resting inside room 1's trunk, lid nudged ajar as if
-  // someone dug it out in a hurry - the player's first usable light source.
-  const trunkPos = new THREE.Vector3(-ROOM_W/2 + 1.0, 0.26, -0.85);
-
-  // the lid, propped open at an angle instead of sitting flush shut
-  const ajarLid = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.05, 0.5),
-    new THREE.MeshStandardMaterial({color:0x1f130a, roughness:0.85}));
-  ajarLid.position.set(trunkPos.x - 0.42, 0.62, trunkPos.z - 0.16);
-  ajarLid.rotation.z = -0.85;
-  ajarLid.castShadow = true;
-  scene.add(ajarLid);
+  // a wooden torch found resting inside room 1's almirah, tucked in the
+  // middle drawer that's already sitting ajar - the player's first usable
+  // light source. Must be called AFTER buildAlmirah() since it attaches to
+  // that drawer's interior box mesh.
+  const drawer = almirahDrawers[1];
+  if(!drawer){ return; } // safety: shouldn't happen given build order in main.js
+  const box = drawer.box;
+  const bw = box.geometry.parameters.width;   // drawer interior depth (x)
+  const bd = box.geometry.parameters.depth;   // drawer interior width (z)
+  const bh = box.geometry.parameters.height;  // drawer interior height (y)
 
   const group = new THREE.Group();
 
-  const handleMat = new THREE.MeshStandardMaterial({color:0x3b2413, roughness:0.9});
-  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.03,0.46,10), handleMat);
-  handle.rotation.z = Math.PI/2.3;
-  handle.castShadow = true;
-  group.add(handle);
+  const shaftMat = new THREE.MeshStandardMaterial({map:torchShaftTexture(), roughness:0.92});
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.026,0.42,10), shaftMat);
+  group.add(shaft);
 
-  // leather wrap bands along the handle
-  const wrapMat = new THREE.MeshStandardMaterial({color:0x241609, roughness:1});
-  for(let i=0;i<4;i++){
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.032,0.008,6,10), wrapMat);
-    band.rotation.y = Math.PI/2;
-    band.position.set(0.13 - i*0.05, 0.22 - i*0.065, 0);
+  const wrapMat = new THREE.MeshStandardMaterial({color:0x1c1108, roughness:1});
+  for(let i=0;i<3;i++){
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.024,0.006,6,10), wrapMat);
+    band.rotation.x = Math.PI/2;
+    band.position.y = -0.14 + i*0.05;
     group.add(band);
   }
 
-  // tar-soaked rag head
-  const clothMat = new THREE.MeshStandardMaterial({color:0x4a3a24, roughness:1});
-  const cloth = new THREE.Mesh(new THREE.ConeGeometry(0.055,0.18,8), clothMat);
-  cloth.position.set(0.24,0.33,0);
-  cloth.rotation.z = -0.2;
-  cloth.castShadow = true;
+  const clothMat = new THREE.MeshStandardMaterial({map:charredClothTexture(), roughness:1});
+  const cloth = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,0.16,12,1,true), clothMat);
+  cloth.position.y = 0.25;
   group.add(cloth);
 
-  // small unlit ember nub, so it reads as an unlit torch waiting to be carried
-  const flameMat = new THREE.MeshStandardMaterial({color:0x8a5a28, emissive:0x3a1c08, emissiveIntensity:0.6, roughness:0.6});
-  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.035,8,8), flameMat);
-  flame.position.set(0.32,0.4,0);
-  flame.scale.set(0.8,1.2,0.8);
-  group.add(flame);
+  const strandMat = new THREE.MeshStandardMaterial({color:0x241a0e, roughness:1, side:THREE.DoubleSide});
+  for(let i=0;i<6;i++){
+    const a = (i/6)*Math.PI*2 + Math.random()*0.4;
+    const strip = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 0.05+Math.random()*0.025), strandMat);
+    strip.position.set(Math.cos(a)*0.032, 0.32, Math.sin(a)*0.032);
+    strip.rotation.y = -a;
+    strip.rotation.x = (Math.random()-0.5)*0.4;
+    group.add(strip);
+  }
 
-  const emberLight = new THREE.PointLight(0xff8a3c, 0.35, 1.4, 2.2);
-  emberLight.position.copy(flame.position);
+  // a small dim ember rather than a full flame - it isn't lit until carried
+  const flameTex = flameTexture();
+  const emberMat = new THREE.SpriteMaterial({map:flameTex, color:0xff8a3c, opacity:0.55, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+  const ember = new THREE.Sprite(emberMat);
+  ember.scale.set(0.08,0.12,1);
+  ember.position.y = 0.34;
+  group.add(ember);
+
+  const emberLight = new THREE.PointLight(0xff8a3c, 0.3, 1.3, 2.2);
+  emberLight.position.y = 0.34;
   group.add(emberLight);
 
-  group.position.set(trunkPos.x - 0.55, 0.58, trunkPos.z - 0.05);
-  group.rotation.y = 0.65;
-  group.rotation.z = 0.25;
-  scene.add(group);
+  // lay the torch on its side inside the drawer (width-wise, where there's
+  // the most room), resting near the top of the drawer's interior
+  group.rotation.x = Math.PI/2;
+  group.position.set(bw*0.05, bh/2 - 0.03, bd*0.08);
+  box.add(group);
 
   const meshes = group.children.filter(m=>m.isMesh);
   meshes.forEach(m=>{ m.userData.isTorchPickup = true; });
-  torchPickupMeshes = meshes;
+  ember.userData.isTorchPickup = true;
+  torchPickupMeshes = [...meshes, ember];
   torchPickupGroup = group;
   torchPickupEmberLight = emberLight;
 }

@@ -69,7 +69,7 @@ function init(){
 
   buildCorridor11();
   buildRoom11();
-  buildRoom11Furniture();
+  buildRoom11Gate();
 
   window.addEventListener('resize', onResize);
   setupControls();

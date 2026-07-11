@@ -113,9 +113,39 @@ let roomBoxes = [];
 
 // electric torch (flashlight) pickup (found in room 1's trunk) + the held
 // torch once picked up
-let torchPickupGroup = null, torchPickupMeshes = [], torchPickupLED = null;
+let torchPickupLED = null;
 let heldTorchGroup = null, heldTorchLensGlow = null, heldTorchLensMesh = null, heldTorchSwitch = null, heldTorchLight = null;
 let hasTorch = false, torchOn = false;
+
+// generic pickup-item registry: any world object registered here becomes
+// interactable with its own dedicated "E" key, completely separate from
+// the left-click used to open/close drawers and boxes. Future items
+// (batteries, keys, notes, whatever) just call registerPickupItem() once
+// instead of each hand-rolling their own raycast/hint/cleanup logic.
+let pickupItems = []; // { group, meshes:[...], label, onPickup }
+
+function registerPickupItem(group, meshes, label, onPickup){
+  meshes.forEach(m=>{ m.userData.isPickupItem = true; m.userData.pickupLabel = label; });
+  pickupItems.push({group, meshes, label, onPickup});
+}
+
+function tryPickupLookedAt(){
+  if(document.pointerLockElement !== document.body) return;
+  if(!pickupItems.length) return;
+  raycaster.setFromCamera(screenCenter, camera);
+  const allMeshes = [];
+  pickupItems.forEach(item=>allMeshes.push(...item.meshes));
+  const hits = raycaster.intersectObjects(allMeshes, false);
+  if(!hits.length) return;
+  const hitMesh = hits[0].object;
+  const idx = pickupItems.findIndex(item=>item.meshes.includes(hitMesh));
+  if(idx === -1) return;
+  const item = pickupItems[idx];
+  pickupItems.splice(idx,1);
+  if(item.group && item.group.parent) item.group.parent.remove(item.group);
+  item.onPickup();
+}
+
 let raycaster = new THREE.Raycaster();
 raycaster.far = 3.2;
 const screenCenter = new THREE.Vector2(0,0);
@@ -651,6 +681,7 @@ function setupControls(){
       case 'KeyA': case 'ArrowLeft': moveL=true; break;
       case 'KeyD': case 'ArrowRight': moveR=true; break;
       case 'KeyF': if(hasTorch) toggleTorch(); break;
+      case 'KeyE': tryPickupLookedAt(); break;
     }
   });
   document.addEventListener('keyup', (e)=>{
@@ -661,19 +692,14 @@ function setupControls(){
       case 'KeyD': case 'ArrowRight': moveR=false; break;
     }
   });
-  // click to pick up the torch, or open/close whichever almirah drawer / box the player is looking at
+  // left click still just opens/closes whichever almirah drawer / box the
+  // player is looking at. Picking up items (torch, etc.) now has its own
+  // dedicated "E" key -> tryPickupLookedAt(), so the two actions can never
+  // collide with each other.
   document.addEventListener('mousedown', (e)=>{
     if(document.pointerLockElement !== document.body) return;
     if(e.button !== 0) return;
     raycaster.setFromCamera(screenCenter, camera);
-
-    if(!hasTorch && torchPickupMeshes.length){
-      const tHits = raycaster.intersectObjects(torchPickupMeshes, false);
-      if(tHits.length){
-        pickUpTorch();
-        return;
-      }
-    }
 
     const meshes = [];
     almirahDrawers.forEach(d=>{
@@ -722,12 +748,7 @@ function startAudio(){
 function pickUpTorch(){
   hasTorch = true;
   torchOn = true;
-  if(torchPickupGroup){
-    if(torchPickupGroup.parent) torchPickupGroup.parent.remove(torchPickupGroup);
-    torchPickupGroup = null;
-  }
-  torchPickupMeshes = [];
-  torchPickupLED = null;
+  torchPickupLED = null; // the drawer model (and its standby LED) is already gone by this point
   buildHeldTorch();
 
   const hint = document.getElementById('interact-hint');
@@ -993,10 +1014,11 @@ function animate(){
     camera.position.x += (0-camera.position.x)*Math.min(1,dt*6);
   }
 
-  // almirah drawers sliding open/closed, plus the torch pickup hint
-  if(almirahDrawers.length || roomBoxes.length || (!hasTorch && torchPickupMeshes.length)){
+  // almirah drawers sliding open/closed, plus the interact/pickup hint
+  if(almirahDrawers.length || roomBoxes.length || pickupItems.length){
     let looking = false;
-    let lookingAtTorch = false;
+    let lookingAtPickup = false;
+    let pickupLabel = '';
     if(document.pointerLockElement === document.body){
       raycaster.setFromCamera(screenCenter, camera);
       const meshes = [];
@@ -1005,14 +1027,18 @@ function animate(){
         if(d.extraMeshes) meshes.push(...d.extraMeshes);
       });
       roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
-      if(!hasTorch) meshes.push(...torchPickupMeshes);
+      pickupItems.forEach(item=>meshes.push(...item.meshes));
       const hoverHits = raycaster.intersectObjects(meshes, false);
       looking = hoverHits.length > 0;
-      lookingAtTorch = looking && !!hoverHits[0].object.userData.isTorchPickup;
+      if(looking){
+        const hitData = hoverHits[0].object.userData;
+        lookingAtPickup = !!hitData.isPickupItem;
+        if(lookingAtPickup) pickupLabel = hitData.pickupLabel || 'item';
+      }
     }
     const hint = document.getElementById('interact-hint');
     if(hint && !window.__torchHintTimeout){
-      hint.textContent = lookingAtTorch ? 'click to pick up torch' : 'click to open / close';
+      hint.textContent = lookingAtPickup ? `press E to pick up ${pickupLabel}` : 'click to open / close';
       hint.style.opacity = looking ? 1 : 0;
     }
 

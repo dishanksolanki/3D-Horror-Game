@@ -1,17 +1,16 @@
 /* ============================================================
-HAVELI OF SHADOWS — ROOM 13 (west wing)
-
-Opens off room 11's WEST wall via corridor13, an extremely
-short 0.25-metre stone connector — mirrors corridor12/room12
-on the opposite side of room 11. Requires engine.js and
-room11.js to be loaded first, AND requires the room11.js patch
-(see room11_patch.js) that cuts a doorway gap into room 11's
-west wall — without that patch this room is unreachable.
+   HAVELI OF SHADOWS — ROOM 13 (west wing)
+   Opens off room 11's WEST wall via corridor13, an extremely
+   short 0.25-metre stone connector — mirrors corridor12/room12
+   on the opposite side of room 11. Requires engine.js and
+   room11.js to be loaded first, AND requires room11.js to already
+   cut a doorway gap into room 11's west wall — without that this
+   room is unreachable.
 ============================================================ */
 
 /* ---- shared sizing for this wing, all derived off room11's own
-existing constants so it lines up regardless of room11's real
-numbers ---- */
+   existing constants so it lines up regardless of room11's real
+   numbers ---- */
 const GATE13_GAPHALF = 0.9; // half-width of room11's west doorway
 const CORR13_LEN = 0.25; // the requested 0.25m corridor
 const CORR13_W = GATE13_GAPHALF * 2;
@@ -24,14 +23,7 @@ const ROOM13_EAST_X = CORR13_WEST_X; // room13's east wall (doorway) x
 const ROOM13_WEST_X = ROOM13_EAST_X - ROOM13_W;
 const ROOM13_CENTER_Z = (ROOM11_SOUTH_Z + ROOM11_NORTH_Z) / 2; // flush with room11's own z-center
 
-/* FIX: room13Light and corridor13Light were being re-declared here with
-`let`, but engine.js already declares them as globals near its top
-(`let corridor11Light, room11Light, corridor12Light, room12Light,
-corridor13Light, room13Light;`). Since none of these files are ES
-modules, every <script> tag shares one global scope, so this second
-`let` collided with engine.js's and threw "Identifier 'room13Light'
-has already been declared". Just assign the already-declared globals
-below instead of re-declaring them. */
+let room13Light, corridor13Light;
 
 function buildCorridor13(){
   const centerX = (CORR13_WEST_X + CORR13_EAST_X) / 2;
@@ -52,14 +44,18 @@ function buildCorridor13(){
   ceil.position.set(centerX, CORR13_H, cz);
   scene.add(ceil);
 
+  // short north/south flanking walls - these run ALONG the corridor's
+  // own length (X), sitting at fixed Z on the north/south sides, so
+  // they need NO y-rotation (their local width already lies on world
+  // X). Their normals face into the corridor: north flank faces +Z
+  // (default), south flank faces -Z (rotated 180°).
   const northWall = new THREE.Mesh(new THREE.PlaneGeometry(CORR13_LEN, CORR13_H), wallMat);
   northWall.position.set(centerX, CORR13_H/2, cz - CORR13_W/2);
-  northWall.rotation.y = Math.PI/2;
   scene.add(northWall);
 
   const southWall = new THREE.Mesh(new THREE.PlaneGeometry(CORR13_LEN, CORR13_H), wallMat.clone());
   southWall.position.set(centerX, CORR13_H/2, cz + CORR13_W/2);
-  southWall.rotation.y = -Math.PI/2;
+  southWall.rotation.y = Math.PI;
   scene.add(southWall);
 
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
@@ -92,13 +88,18 @@ function buildRoom13(){
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
   const ceilMat = new THREE.MeshStandardMaterial({map:ceilingTexture(), roughness:1});
 
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_D, ROOM13_W), floorMat);
+  // floor/ceiling: X-extent and Z-extent both use ROOM13_W, since
+  // that's the same constant that defines the room's real east/west
+  // wall positions (ROOM13_EAST_X/WEST_X) AND the room's real
+  // north/south wall spacing below - keeps every wall's corner
+  // meeting cleanly instead of overshooting or falling short.
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_W, ROOM13_W), floorMat);
   floor.rotation.x = -Math.PI/2;
   floor.position.set(centerX, 0, cz);
   floor.receiveShadow = true;
   scene.add(floor);
 
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_D, ROOM13_W), ceilMat);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_W, ROOM13_W), ceilMat);
   ceil.rotation.x = Math.PI/2;
   ceil.position.set(centerX, ROOM13_H, cz);
   scene.add(ceil);
@@ -109,16 +110,19 @@ function buildRoom13(){
   westWall.rotation.y = Math.PI/2;
   scene.add(westWall);
 
-  // north wall - solid
-  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_D, ROOM13_H), wallMat.clone());
+  // north wall - solid. Runs along X at fixed Z, so it needs NO
+  // y-rotation (its local width already lies on world X). Default
+  // normal (+Z) already faces into the room from the north side.
+  const northWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_W, ROOM13_H), wallMat.clone());
   northWall.position.set(centerX, ROOM13_H/2, cz - ROOM13_W/2);
-  northWall.rotation.y = Math.PI/2;
   scene.add(northWall);
 
-  // south wall - solid
-  const southWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_D, ROOM13_H), wallMat.clone());
+  // south wall - solid. Also runs along X at fixed Z, so its local
+  // width also lies on world X, but it needs a 180° flip so its
+  // normal (-Z) faces back into the room from the south side.
+  const southWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM13_W, ROOM13_H), wallMat.clone());
   southWall.position.set(centerX, ROOM13_H/2, cz + ROOM13_W/2);
-  southWall.rotation.y = -Math.PI/2;
+  southWall.rotation.y = Math.PI;
   scene.add(southWall);
 
   // east wall - carries the doorway gap back through corridor13 to room11
@@ -151,9 +155,9 @@ function buildRoom13(){
 
   // baseboard trim
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
-  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM13_D,0.15,0.1), trimMat);
+  const trimN = new THREE.Mesh(new THREE.BoxGeometry(ROOM13_W,0.15,0.1), trimMat);
   trimN.position.set(centerX,0.08,cz-ROOM13_W/2); scene.add(trimN);
-  const trimS = new THREE.Mesh(new THREE.BoxGeometry(ROOM13_D,0.15,0.1), trimMat);
+  const trimS = new THREE.Mesh(new THREE.BoxGeometry(ROOM13_W,0.15,0.1), trimMat);
   trimS.position.set(centerX,0.08,cz+ROOM13_W/2); scene.add(trimS);
   const trimW = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.15,ROOM13_W), trimMat);
   trimW.position.set(ROOM13_WEST_X,0.08,cz); scene.add(trimW);

@@ -76,6 +76,11 @@ canvas{display:block;}
   z-index:4;pointer-events:none;opacity:0;transition:opacity 0.15s ease;
   text-shadow:0 0 6px rgba(0,0,0,0.9);
 }
+#torch-status{
+  position:fixed;bottom:18px;left:20px;color:#d9ac5c;font-size:12px;letter-spacing:3px;
+  z-index:4;opacity:0;text-transform:uppercase;pointer-events:none;font-family:'Cormorant Garamond', serif;
+  transition:opacity 0.5s ease;
+}
 </style>
 </head>
 <body>
@@ -88,6 +93,7 @@ canvas{display:block;}
     <div class="controls-row">
       <span>WASD / Arrows — move</span>
       <span>Mouse — look</span>
+      <span>F — toggle torch</span>
       <span>ESC — release cursor</span>
     </div>
     <div class="hint">click anywhere to enter</div>
@@ -98,6 +104,7 @@ canvas{display:block;}
 <div id="hud">Room 01<small>Sone ka Kamra</small></div>
 <div id="crosshair"></div>
 <div id="interact-hint">click to open / close</div>
+<div id="torch-status">torch: off</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="engine.js"></script>

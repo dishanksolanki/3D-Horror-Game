@@ -37,6 +37,7 @@ function init(){
   buildDoorway();
   buildCharpai();
   buildTrunk();
+  buildTorch();
   buildAlmirah();
   buildMirror();
   buildBulb();

@@ -52,6 +52,9 @@ const ROOM4_EAST_X = -ROOM2_W/2; // shares room 2's own west wall
 const ROOM4_WEST_X = ROOM4_EAST_X - ROOM4_W;
 const ROOM4_CENTER_Z = ROOM2_CENTER_Z; // doorway centered on room 2's z-axis
 
+/* ---- room 6: a small ancestral shrine opening off room 2's north wall ---- */
+const GATE6_GAPHALF = 0.55; // narrow, older doorway befitting a shrine
+
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
 let corridorLight, room2Light, corridor2Light, room3Light, room4Light;
 let moonSpot, windowShaft;

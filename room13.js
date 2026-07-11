@@ -1,36 +1,41 @@
 /* ============================================================
-   HAVELI OF SHADOWS — ROOM 13 (west wing)
+HAVELI OF SHADOWS — ROOM 13 (west wing)
 
-   Opens off room 11's WEST wall via corridor13, an extremely
-   short 0.25-metre stone connector — mirrors corridor12/room12
-   on the opposite side of room 11. Requires engine.js and
-   room11.js to be loaded first, AND requires the room11.js patch
-   (see room11_patch.js) that cuts a doorway gap into room 11's
-   west wall — without that patch this room is unreachable.
+Opens off room 11's WEST wall via corridor13, an extremely
+short 0.25-metre stone connector — mirrors corridor12/room12
+on the opposite side of room 11. Requires engine.js and
+room11.js to be loaded first, AND requires the room11.js patch
+(see room11_patch.js) that cuts a doorway gap into room 11's
+west wall — without that patch this room is unreachable.
 ============================================================ */
 
 /* ---- shared sizing for this wing, all derived off room11's own
-   existing constants so it lines up regardless of room11's real
-   numbers ---- */
-const GATE13_GAPHALF = 0.9;                    // half-width of room11's west doorway
-const CORR13_LEN = 0.25;                       // the requested 0.25m corridor
+existing constants so it lines up regardless of room11's real
+numbers ---- */
+const GATE13_GAPHALF = 0.9; // half-width of room11's west doorway
+const CORR13_LEN = 0.25; // the requested 0.25m corridor
 const CORR13_W = GATE13_GAPHALF * 2;
 const CORR13_H = 2.3;
-
-const CORR13_EAST_X = -ROOM11_W / 2;           // starts at room11's west wall
+const CORR13_EAST_X = -ROOM11_W / 2; // starts at room11's west wall
 const CORR13_WEST_X = CORR13_EAST_X - CORR13_LEN;
 
 const ROOM13_W = 5.0, ROOM13_D = 5.6, ROOM13_H = 3.05;
-const ROOM13_EAST_X = CORR13_WEST_X;           // room13's east wall (doorway) x
+const ROOM13_EAST_X = CORR13_WEST_X; // room13's east wall (doorway) x
 const ROOM13_WEST_X = ROOM13_EAST_X - ROOM13_W;
 const ROOM13_CENTER_Z = (ROOM11_SOUTH_Z + ROOM11_NORTH_Z) / 2; // flush with room11's own z-center
 
-let room13Light, corridor13Light;
+/* FIX: room13Light and corridor13Light were being re-declared here with
+`let`, but engine.js already declares them as globals near its top
+(`let corridor11Light, room11Light, corridor12Light, room12Light,
+corridor13Light, room13Light;`). Since none of these files are ES
+modules, every <script> tag shares one global scope, so this second
+`let` collided with engine.js's and threw "Identifier 'room13Light'
+has already been declared". Just assign the already-declared globals
+below instead of re-declaring them. */
 
 function buildCorridor13(){
   const centerX = (CORR13_WEST_X + CORR13_EAST_X) / 2;
   const cz = ROOM13_CENTER_Z;
-
   const wTex = wallTexture(); wTex.repeat.set(0.5, 1.3);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});
@@ -82,7 +87,6 @@ function buildCorridor13(){
 function buildRoom13(){
   const cz = ROOM13_CENTER_Z;
   const centerX = (ROOM13_WEST_X + ROOM13_EAST_X) / 2;
-
   const wTex = wallTexture(); wTex.repeat.set(3.2, 1.5);
   const wallMat = new THREE.MeshStandardMaterial({map:wTex, roughness:0.95, metalness:0.02});
   const floorMat = new THREE.MeshStandardMaterial({map:floorTexture(), roughness:0.9});

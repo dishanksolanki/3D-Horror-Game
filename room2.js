@@ -88,10 +88,12 @@ function buildRoom2(){
   ceil.position.set(cx, ROOM2_H, centerZ);
   scene.add(ceil);
 
-  // north (back) wall - now opens into room 6, the small ancestral shrine.
-  // Built with a doorway gap in the same panel+lintel+frame style used
-  // for every other doorway in the haveli, instead of the old solid slab.
-  const nGapHalf = GATE6_GAPHALF;
+  // north (back) wall - opens into the room 11 wing via corridor11.
+  // FIX: this used to reference an undefined GATE6_GAPHALF. corridor11
+  // (built in engine.js's constants + room11.js) already connects to this
+  // exact wall using GATE11_GAPHALF, so we use that here too - the gap
+  // now lines up exactly with corridor11's own width on the other side.
+  const nGapHalf = GATE11_GAPHALF;
   const nSideW = (ROOM2_W/2) - nGapHalf;
   const nTex = wallTexture(); nTex.repeat.set(1.4,1.5);
   const nMat = new THREE.MeshStandardMaterial({map:nTex, roughness:0.95, metalness:0.02, side:THREE.DoubleSide});
@@ -104,7 +106,11 @@ function buildRoom2(){
   nRightPanel.position.set(cx+(nGapHalf+nSideW/2), ROOM2_H/2, ROOM2_NORTH_Z);
   scene.add(nRightPanel);
 
-  const nDoorH = DOOR_H*0.85; // a slightly lower, older doorway befitting a shrine
+  // FIX: was DOOR_H*0.85 (a "shrine"-scale shorter doorway) which didn't
+  // match room11.js's south doorway on the other side of this same
+  // connector (that one uses the full DOOR_H). Using the full height here
+  // too so both sides of the doorway line up instead of leaving a seam.
+  const nDoorH = DOOR_H;
   const nLintel = new THREE.Mesh(new THREE.PlaneGeometry(nGapHalf*2+0.4, ROOM2_H-nDoorH), nMat.clone());
   nLintel.position.set(cx, nDoorH+(ROOM2_H-nDoorH)/2, ROOM2_NORTH_Z);
   scene.add(nLintel);
@@ -205,8 +211,8 @@ function buildRoom2(){
   const ft = new THREE.Mesh(new THREE.BoxGeometry(gapHalf*2+0.36, 0.18, 0.3), frameMat); ft.position.set(cx,DOOR_H+0.1,ROOM2_SOUTH_Z);
   scene.add(fl,fr,ft);
 
-  // baseboard trim - north wall trim is now split either side of the new
-  // room 6 doorway instead of running solid across the whole wall
+  // baseboard trim - north wall trim is split either side of the room11
+  // wing doorway instead of running solid across the whole wall
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
   const trimNL = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
   trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM2_NORTH_Z); scene.add(trimNL);

@@ -55,15 +55,70 @@ const ROOM4_EAST_X = -ROOM2_W/2; // shares room 2's own west wall
 const ROOM4_WEST_X = ROOM4_EAST_X - ROOM4_W;
 const ROOM4_CENTER_Z = ROOM2_CENTER_Z; // doorway centered on room 2's z-axis
 
-/* ---- room 11 wing: opens off room 2's NORTH wall (its back, otherwise-
-dead-end wall) via corridor11, an extremely short 0.25m stone connector.
-Room 11 then branches EAST to room12 (via corridor12) and WEST to room13
-(via corridor13), each also a 0.25m connector, per the requested layout. ---- */
+/* ---- room 5: opens directly off room 3's east wall (no corridor).
+Shares the same doorway width as corridor2 so the panel math in room3.js
+and room5.js lines up exactly. ---- */
+const ROOM5_GAPHALF = CORR2_GAPHALF;
+const ROOM5_W = 5.4, ROOM5_D = 4.4, ROOM5_H = 3.0;
+const ROOM5_WEST_X = ROOM3_EAST_X;       // shares room 3's own east wall
+const ROOM5_EAST_X = ROOM5_WEST_X + ROOM5_D;
+const ROOM5_CENTER_Z = ROOM3_CENTER_Z;   // flush with room 3, straight through the doorway
+
+/* ---- room 6: the ancestor's shrine - opens directly off room 2's own
+NORTH wall (no corridor), continuing the main N/S spine of the haveli
+straight up through it. Also branches EAST into room 7 and WEST into
+room 8, and north (via corridor9) into room 9, the hall. This is the
+chain that room10.js's own doc comment expects to end at corridor11 -
+so corridor11 (below) now picks up from ROOM10_NORTH_Z, not directly
+from room 2. ---- */
+const GATE6_GAPHALF = 0.85;
+const ROOM6_W = 4.4, ROOM6_D = 4.0, ROOM6_H = 3.1;
+const ROOM6_SOUTH_Z = ROOM2_NORTH_Z;     // shares room 2's own north wall
+const ROOM6_NORTH_Z = ROOM6_SOUTH_Z - ROOM6_D;
+
+const GATE7_GAPHALF = 0.8;
+const ROOM7_W = 3.6, ROOM7_D = 3.4, ROOM7_H = 2.9;
+const ROOM7_WEST_X = ROOM6_W/2;          // shares room 6's own east wall
+const ROOM7_EAST_X = ROOM7_WEST_X + ROOM7_W;
+const ROOM7_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // flush with room 6
+
+const GATE8_GAPHALF = 0.8;
+const ROOM8_W = 3.6, ROOM8_D = 3.4, ROOM8_H = 2.9;
+const ROOM8_EAST_X = -ROOM6_W/2;         // shares room 6's own west wall
+const ROOM8_WEST_X = ROOM8_EAST_X - ROOM8_W;
+const ROOM8_CENTER_Z = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2; // flush with room 6
+
+/* ---- corridor9 + room 9 (the hall), off room 6's north wall ---- */
+const GATE9_GAPHALF = 1.0;
+const CORR9_LEN = 2.0, CORR9_W = GATE9_GAPHALF*2, CORR9_H = 2.3;
+const CORR9_SOUTH_Z = ROOM6_NORTH_Z;
+const CORR9_NORTH_Z = CORR9_SOUTH_Z - CORR9_LEN;
+
+const ROOM9_W = 4.6, ROOM9_D = 8.0, ROOM9_H = 3.2;
+const ROOM9_SOUTH_Z = CORR9_NORTH_Z;
+const ROOM9_NORTH_Z = ROOM9_SOUTH_Z - ROOM9_D;
+
+/* ---- room 10: a second hall, opens DIRECTLY off room 9's north wall
+(no corridor), then continues north into corridor11 -> the room11 wing ---- */
+const GATE10_GAPHALF = 1.0;
+const ROOM10_W = 4.6, ROOM10_D = 4.4, ROOM10_H = 3.1;
+const ROOM10_SOUTH_Z = ROOM9_NORTH_Z;
+const ROOM10_NORTH_Z = ROOM10_SOUTH_Z - ROOM10_D;
+
+/* ---- room 11 wing: opens off room 10's NORTH wall via corridor11, an
+extremely short 0.25m stone connector. Room 11 then branches EAST to
+room12 (via corridor12) and WEST to room13 (via corridor13), each also
+a 0.25m connector, per the requested layout.
+FIX: this used to short-circuit straight off ROOM2_NORTH_Z, which
+skipped rooms 6-10 entirely (the shrine, room7/8, the hall, and the
+second hall never got attached to anything, and their build functions
+were never even called). Restored to attach where room9.js/room10.js's
+own comments always said it should: room 10's north wall. ---- */
 const GATE11_GAPHALF = 0.9;              // corridor11's doorway half-width (both ends)
 const CORR11_LEN = 0.25;                 // the requested 0.25m corridor
 const CORR11_W = GATE11_GAPHALF*2;
 const CORR11_H = 2.3;
-const CORR11_SOUTH_Z = ROOM2_NORTH_Z;    // starts at room 2's own back wall
+const CORR11_SOUTH_Z = ROOM10_NORTH_Z;   // starts at room 10's own north wall
 const CORR11_NORTH_Z = CORR11_SOUTH_Z - CORR11_LEN;
 
 const ROOM11_W = 5.0, ROOM11_D = 5.0, ROOM11_H = 3.0;
@@ -76,6 +131,7 @@ const ROOM11_GATE_FAR_Z = ROOM11_NORTH_Z - ROOM11_GATE_DEPTH;
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
 let corridorLight, room2Light, corridor2Light, room3Light, room4Light;
+let room5Light, room6Light, corridor9Light, room9Light, room10Light;
 let corridor11Light, room11Light, corridor12Light, room12Light, corridor13Light, room13Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;

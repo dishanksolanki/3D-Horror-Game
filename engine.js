@@ -102,8 +102,20 @@ const ROOM10_W = 6.4, ROOM10_D = 7.0, ROOM10_H = 3.2;
 const ROOM10_SOUTH_Z = ROOM9_NORTH_Z; // shares room 9's own north wall
 const ROOM10_NORTH_Z = ROOM10_SOUTH_Z - ROOM10_D;
 
+/* ---- room 11: a small ritual chamber connected to room 10's own
+   north wall by an extremely short, tight 0.25-metre stone connector
+   (corridor11) - basically a thick doorway threshold rather than a
+   proper hallway like corridor9's full 2m passage ---- */
+const GATE11_GAPHALF = 0.9; // matches room10's own doorway width
+const CORR11_LEN = 0.25, CORR11_W = GATE11_GAPHALF*2, CORR11_H = ROOM10_H;
+const CORR11_SOUTH_Z = ROOM10_NORTH_Z; // corridor starts at room10's own north wall
+const CORR11_NORTH_Z = CORR11_SOUTH_Z - CORR11_LEN; // corridor ends here
+const ROOM11_W = 5.0, ROOM11_D = 5.4, ROOM11_H = 2.9;
+const ROOM11_SOUTH_Z = CORR11_NORTH_Z; // room 11's south wall (doorway) z
+const ROOM11_NORTH_Z = ROOM11_SOUTH_Z - ROOM11_D;
+
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
-let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light;
+let corridorLight, room2Light, corridor2Light, room3Light, room4Light, room5Light, room6Light, corridor9Light, room9Light, room10Light, corridor11Light, room11Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -1001,6 +1013,18 @@ function animate(){
   if(room10Light){
     const r10Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
     room10Light.intensity = 0.65 + Math.sin(t*3.1+2.1)*0.11 - r10Flicker;
+  }
+
+  if(corridor11Light){
+    const c11Flicker = Math.random() < 0.03 ? Math.random()*0.3 : 0;
+    corridor11Light.intensity = 0.4 + Math.sin(t*2.6)*0.08 - c11Flicker;
+  }
+
+  if(room11Light){
+    // a cluster of small ritual diyas rather than a single lantern - a
+    // shorter, twitchier flicker cycle, similar in spirit to room6Light
+    const r11Flicker = Math.random() < 0.05 ? Math.random()*0.28 : 0;
+    room11Light.intensity = 0.55 + Math.sin(t*4.8)*0.1 + Math.sin(t*1.5)*0.06 - r11Flicker;
   }
 
   // torch: a small steady standby LED while it sits in the drawer, a

@@ -122,25 +122,53 @@ let hasTorch = false, torchOn = false;
 // the left-click used to open/close drawers and boxes. Future items
 // (batteries, keys, notes, whatever) just call registerPickupItem() once
 // instead of each hand-rolling their own raycast/hint/cleanup logic.
-let pickupItems = []; // { group, meshes:[...], label, onPickup }
+//
+// Hit-testing uses a padded bounding sphere rather than exact mesh
+// raycasting, so the player doesn't need pixel-perfect crosshair aim on a
+// small object - just look roughly at it.
+let pickupItems = []; // { group, meshes:[...], label, onPickup, sphere }
+const PICKUP_HIT_PAD = 0.16; // extra forgiveness radius, in world units, on top of the item's own size
 
 function registerPickupItem(group, meshes, label, onPickup){
   meshes.forEach(m=>{ m.userData.isPickupItem = true; m.userData.pickupLabel = label; });
-  pickupItems.push({group, meshes, label, onPickup});
+  scene.updateMatrixWorld(true); // make sure world transforms are current before measuring the item
+  const box = new THREE.Box3().setFromObject(group);
+  const sphere = new THREE.Sphere();
+  box.getBoundingSphere(sphere);
+  sphere.radius = Math.max(sphere.radius, 0.05) + PICKUP_HIT_PAD;
+  pickupItems.push({group, meshes, label, onPickup, sphere});
+}
+
+// returns the distance along the camera ray to the closest-approach point
+// if the ray passes within `sphere.radius` of `sphere.center` (and that
+// point is in front of the camera, within raycaster.far), otherwise false
+function forgivingSphereHit(sphere){
+  const ray = raycaster.ray;
+  const toCenter = sphere.center.clone().sub(ray.origin);
+  const t = toCenter.dot(ray.direction);
+  if(t < 0 || t > raycaster.far + sphere.radius) return false;
+  const closest = ray.origin.clone().add(ray.direction.clone().multiplyScalar(Math.max(t,0)));
+  return closest.distanceTo(sphere.center) <= sphere.radius ? t : false;
+}
+
+// which registered pickup item (if any) the crosshair is currently loosely
+// aimed at - returns the item object, or null
+function pickupItemLookedAt(){
+  if(!pickupItems.length) return null;
+  raycaster.setFromCamera(screenCenter, camera);
+  let best = null, bestT = Infinity;
+  pickupItems.forEach(item=>{
+    const t = forgivingSphereHit(item.sphere);
+    if(t !== false && t < bestT){ bestT = t; best = item; }
+  });
+  return best;
 }
 
 function tryPickupLookedAt(){
   if(document.pointerLockElement !== document.body) return;
-  if(!pickupItems.length) return;
-  raycaster.setFromCamera(screenCenter, camera);
-  const allMeshes = [];
-  pickupItems.forEach(item=>allMeshes.push(...item.meshes));
-  const hits = raycaster.intersectObjects(allMeshes, false);
-  if(!hits.length) return;
-  const hitMesh = hits[0].object;
-  const idx = pickupItems.findIndex(item=>item.meshes.includes(hitMesh));
-  if(idx === -1) return;
-  const item = pickupItems[idx];
+  const item = pickupItemLookedAt();
+  if(!item) return;
+  const idx = pickupItems.indexOf(item);
   pickupItems.splice(idx,1);
   if(item.group && item.group.parent) item.group.parent.remove(item.group);
   item.onPickup();
@@ -1021,19 +1049,24 @@ function animate(){
     let pickupLabel = '';
     if(document.pointerLockElement === document.body){
       raycaster.setFromCamera(screenCenter, camera);
-      const meshes = [];
-      almirahDrawers.forEach(d=>{
-        meshes.push(d.front, d.box, d.knob);
-        if(d.extraMeshes) meshes.push(...d.extraMeshes);
-      });
-      roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
-      pickupItems.forEach(item=>meshes.push(...item.meshes));
-      const hoverHits = raycaster.intersectObjects(meshes, false);
-      looking = hoverHits.length > 0;
-      if(looking){
-        const hitData = hoverHits[0].object.userData;
-        lookingAtPickup = !!hitData.isPickupItem;
-        if(lookingAtPickup) pickupLabel = hitData.pickupLabel || 'item';
+
+      // pickup items use the forgiving bounding-sphere test (see
+      // registerPickupItem/pickupItemLookedAt), checked first so a nearby
+      // item takes priority over a drawer/box behind or around it
+      const pickupHit = pickupItemLookedAt();
+      if(pickupHit){
+        looking = true;
+        lookingAtPickup = true;
+        pickupLabel = pickupHit.label || 'item';
+      } else {
+        const meshes = [];
+        almirahDrawers.forEach(d=>{
+          meshes.push(d.front, d.box, d.knob);
+          if(d.extraMeshes) meshes.push(...d.extraMeshes);
+        });
+        roomBoxes.forEach(b=>meshes.push(b.lid, b.body, b.clasp, b.claspRing));
+        const hoverHits = raycaster.intersectObjects(meshes, false);
+        looking = hoverHits.length > 0;
       }
     }
     const hint = document.getElementById('interact-hint');

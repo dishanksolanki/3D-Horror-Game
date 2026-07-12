@@ -105,34 +105,11 @@ const ROOM10_W = 4.6, ROOM10_D = 4.4, ROOM10_H = 3.1;
 const ROOM10_SOUTH_Z = ROOM9_NORTH_Z;
 const ROOM10_NORTH_Z = ROOM10_SOUTH_Z - ROOM10_D;
 
-/* ---- room 11 wing: opens off room 10's NORTH wall via corridor11, an
-extremely short 0.25m stone connector. Room 11 then branches EAST to
-room12 (via corridor12) and WEST to room13 (via corridor13), each also
-a 0.25m connector, per the requested layout.
-FIX: this used to short-circuit straight off ROOM2_NORTH_Z, which
-skipped rooms 6-10 entirely (the shrine, room7/8, the hall, and the
-second hall never got attached to anything, and their build functions
-were never even called). Restored to attach where room9.js/room10.js's
-own comments always said it should: room 10's north wall. ---- */
-const GATE11_GAPHALF = 0.9;              // corridor11's doorway half-width (both ends)
-const CORR11_LEN = 0.25;                 // the requested 0.25m corridor
-const CORR11_W = GATE11_GAPHALF*2;
-const CORR11_H = 2.3;
-const CORR11_SOUTH_Z = ROOM10_NORTH_Z;   // starts at room 10's own north wall
-const CORR11_NORTH_Z = CORR11_SOUTH_Z - CORR11_LEN;
 
-const ROOM11_W = 5.0, ROOM11_D = 5.0, ROOM11_H = 3.0;
-const ROOM11_SOUTH_Z = CORR11_NORTH_Z;   // room 11's south wall (doorway) z
-const ROOM11_NORTH_Z = ROOM11_SOUTH_Z - ROOM11_D;
-
-const ROOM11_GATE_GAPHALF = 0.9;         // room 11's own north gate, opposite the south doorway
-const ROOM11_GATE_DEPTH = 1.2;           // short dead-end threshold beyond the gate
-const ROOM11_GATE_FAR_Z = ROOM11_NORTH_Z - ROOM11_GATE_DEPTH;
 
 let bulbLight, bulbMesh, bulbPivot, bellPivot, curtainStrips=[];
 let corridorLight, room2Light, corridor2Light, room3Light, room4Light;
 let room5Light, room6Light, corridor9Light, room9Light, room10Light;
-let corridor11Light, room11Light, corridor12Light, room12Light, corridor13Light, room13Light;
 let moonSpot, windowShaft;
 let maxAniso = 1;
 let bobTimer = 0;
@@ -742,14 +719,7 @@ if(room4Light){
 const fFlicker = Math.random() < 0.04 ? Math.random()*0.25 : 0;
 room4Light.intensity = 0.55 + Math.sin(t*4.2)*0.09 - fFlicker;
 }
-if(corridor11Light){
-const flick = Math.random() < 0.03 ? Math.random()*0.25 : 0;
-corridor11Light.intensity = 0.45 + Math.sin(t*2.4)*0.08 - flick;
-}
-if(room11Light){
-const flick = Math.random() < 0.025 ? Math.random()*0.3 : 0;
-room11Light.intensity = 0.6 + Math.sin(t*3.1+0.6)*0.09 - flick;
-}
+
 
 
 if(bellPivot) bellPivot.rotation.z = Math.sin(t*0.8)*0.05;

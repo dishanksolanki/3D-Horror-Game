@@ -78,10 +78,7 @@ safeBuild('buildRoom9Furniture', buildRoom9Furniture);
 safeBuild('buildRoom10', buildRoom10);
 safeBuild('buildRoom10Furniture', buildRoom10Furniture);
 
-// --- room 11 wing: off room 10's back wall, then east/west to 12 & 13 ---
-safeBuild('buildCorridor11', buildCorridor11);
-safeBuild('buildRoom11', buildRoom11);
-safeBuild('buildRoom11Gate', buildRoom11Gate);
+
 
 window.addEventListener('resize', onResize);
 setupControls();

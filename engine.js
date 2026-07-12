@@ -750,22 +750,7 @@ if(room11Light){
 const flick = Math.random() < 0.025 ? Math.random()*0.3 : 0;
 room11Light.intensity = 0.6 + Math.sin(t*3.1+0.6)*0.09 - flick;
 }
-if(corridor12Light){
-const flick = Math.random() < 0.03 ? Math.random()*0.25 : 0;
-corridor12Light.intensity = 0.45 + Math.sin(t*2.6+0.3)*0.08 - flick;
-}
-if(room12Light){
-const flick = Math.random() < 0.025 ? Math.random()*0.3 : 0;
-room12Light.intensity = 0.6 + Math.sin(t*3.3+1.1)*0.09 - flick;
-}
-if(corridor13Light){
-const flick = Math.random() < 0.03 ? Math.random()*0.25 : 0;
-corridor13Light.intensity = 0.45 + Math.sin(t*2.2+0.8)*0.08 - flick;
-}
-if(room13Light){
-const flick = Math.random() < 0.025 ? Math.random()*0.3 : 0;
-room13Light.intensity = 0.6 + Math.sin(t*2.9+1.7)*0.09 - flick;
-}
+
 
 if(bellPivot) bellPivot.rotation.z = Math.sin(t*0.8)*0.05;
 

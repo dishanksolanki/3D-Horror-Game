@@ -8,11 +8,36 @@
 
    UPDATE: room6 is no longer a dead end on the east/west sides.
    room7.js opens off this room's east wall and room8.js opens
-   off this room's west wall (see the notes in those files), so
-   both walls now carry a doorway gap (GATE7_GAPHALF / GATE8_GAPHALF,
-   both defined in engine.js) instead of being built solid.
-   Requires room7.js and room8.js to be loaded after this file.
+   off this room's west wall (see the notes in those files).
+
+   UPDATE 2: the east/west openings used to be full-width doorway
+   gaps (GATE7_GAPHALF / GATE8_GAPHALF), which meant you could
+   see straight through from room 7 or room 8 into room 6 (and
+   vice versa). Both walls are now built SOLID except for one
+   narrow, doll-sized slit (DOLL_GAP_HALF) placed exactly where
+   the doll prop stands. The doll is the only thing you can see
+   or pass through - the rest of the wall blocks sightlines
+   completely.
+
+   To hook up your doll object:
+   - East gap (room6 <-> room7) is centered at
+       x = cx + ROOM6_W/2,  z = centerZ
+   - West gap (room6 <-> room8) is centered at
+       x = cx - ROOM6_W/2,  z = centerZ
+   - Position the doll mesh at that exact (x, z), don't add its
+     bounding box to `obstacles`, and (if you have any occlusion/
+     raycast visibility check) exclude it from that check too -
+     that's what lets it be seen/passed through while the solid
+     parts of the wall block everything else.
+   - If your doll model isn't ~0.8m wide, tune DOLL_GAP_HALF
+     below so the slit matches its silhouette.
 ============================================================ */
+
+// half-width of the narrow doll-shaped opening in room6's east/west
+// walls - this replaces the old full-doorway GATE7_GAPHALF / GATE8_GAPHALF
+// gaps for these two walls specifically. Shrink/grow to match your doll.
+const DOLL_GAP_HALF = 0.4;
+
 function buildRoom6(){
   const cx = 0;
   const centerZ = (ROOM6_SOUTH_Z + ROOM6_NORTH_Z)/2;
@@ -34,12 +59,7 @@ function buildRoom6(){
   scene.add(ceil);
 
   // north wall - carries a doorway gap -> corridor9 -> room 9 (the hall).
-  // This used to be built fully solid to back the shrine altar, but with
-  // the altar/furniture removed there's nothing left to back, and
-  // corridor9.js/room9.js both expect this exact wall to already have a
-  // gap sized to GATE9_GAPHALF (defined in engine.js) - without it, the
-  // entire room9/10/11/12 chain is unreachable no matter how correctly
-  // those files are built, since they all hang off this one doorway.
+  // Unchanged - still a normal full-width doorway.
   const nGapHalf = GATE9_GAPHALF;
   const nSideW = (ROOM6_W/2) - nGapHalf;
   const nTex = wallTexture(); nTex.repeat.set(3, 1.4);
@@ -64,9 +84,10 @@ function buildRoom6(){
   const nft = new THREE.Mesh(new THREE.BoxGeometry(nGapHalf*2+0.32, 0.18, 0.3), nFrameMat); nft.position.set(cx, DOOR_H+0.1, ROOM6_NORTH_Z);
   scene.add(nfl,nfr,nft);
 
-  // east wall - carries a doorway gap -> room 7, matching the
-  // panel+lintel+frame pattern used for every other doorway in the haveli
-  const eGapHalf = GATE7_GAPHALF;
+  // east wall -> room 7. Was a full doorway gap (GATE7_GAPHALF); now a
+  // narrow doll-sized slit (DOLL_GAP_HALF) so the wall reads as solid
+  // and blocks the sightline into room 7, except for the doll's silhouette.
+  const eGapHalf = DOLL_GAP_HALF;
   const eSideD = (ROOM6_D/2) - eGapHalf;
   const eTex = wallTexture(); eTex.repeat.set(1.4, 1.5);
   const eMat = new THREE.MeshStandardMaterial({map:eTex, roughness:0.95, metalness:0.02});
@@ -93,8 +114,9 @@ function buildRoom6(){
   const eft = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,eGapHalf*2+0.36), eFrameMat); eft.position.set(cx+ROOM6_W/2,DOOR_H+0.1,centerZ);
   scene.add(efn,efs,eft);
 
-  // west wall - carries a doorway gap -> room 8, same pattern
-  const wGapHalf = GATE8_GAPHALF;
+  // west wall -> room 8. Same treatment: narrow doll-sized slit instead
+  // of a full doorway gap.
+  const wGapHalf = DOLL_GAP_HALF;
   const wSideD = (ROOM6_D/2) - wGapHalf;
   const wTex2 = wallTexture(); wTex2.repeat.set(1.4, 1.5);
   const wMat2 = new THREE.MeshStandardMaterial({map:wTex2, roughness:0.95, metalness:0.02});
@@ -124,10 +146,8 @@ function buildRoom6(){
   // note: the south wall (the doorway back into room 2) is built once, by
   // buildRoom2() in room2.js, so it isn't duplicated here.
 
-  // baseboard trim - all three built walls (north, east, west) now carry
-  // doorway gaps, so each trim run is split either side of its gap
-  // instead of running solid across the whole wall. The south threshold
-  // trim is already laid down by room 2's own doorway construction.
+  // baseboard trim - all three built walls (north, east, west) carry
+  // doorway gaps, so each trim run is split either side of its gap.
   const trimMat = new THREE.MeshStandardMaterial({color:0x120c08, roughness:1});
   const trimNL = new THREE.Mesh(new THREE.BoxGeometry(nSideW,0.15,0.1), trimMat);
   trimNL.position.set(cx-(nGapHalf+nSideW/2),0.08,ROOM6_NORTH_Z); scene.add(trimNL);
@@ -164,14 +184,10 @@ function buildRoom6(){
   // feels seamless in both directions
   obstacles.push({minX:cx-ROOM6_W/2, maxX:cx+ROOM6_W/2, minZ:ROOM6_NORTH_Z, maxZ:ROOM6_SOUTH_Z+1.0, isRoomBound:true});
 
-  // doorway bridge -> room 7 (east wall gap only). room6's own zone and
-  // room7's own zone both stop exactly at this shared wall with no
-  // overlap, which (given PLAYER_R) leaves a dead strip neither zone
-  // covers - the player is never "inside" anything right at the
-  // threshold, so tryMove() silently refuses to move them through. This
-  // narrow bridge, restricted to the gap's width and overlapping 1m into
-  // each room, closes that gap - same technique as room9's bridge into
-  // room10.
+  // doorway bridge -> room 7 (east wall gap only). Narrowed to match the
+  // doll-sized slit (eGapHalf), so the player can only physically pass
+  // through the same narrow opening the doll occupies - not the full
+  // former doorway width.
   obstacles.push({minX:cx+ROOM6_W/2-1.0, maxX:cx+ROOM6_W/2+1.0, minZ:centerZ-eGapHalf, maxZ:centerZ+eGapHalf, isRoomBound:true});
 
   // doorway bridge -> room 8 (west wall gap only), same reasoning

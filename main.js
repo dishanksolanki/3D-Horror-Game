@@ -82,10 +82,6 @@ safeBuild('buildRoom10Furniture', buildRoom10Furniture);
 safeBuild('buildCorridor11', buildCorridor11);
 safeBuild('buildRoom11', buildRoom11);
 safeBuild('buildRoom11Gate', buildRoom11Gate);
-safeBuild('buildCorridor12', buildCorridor12);
-safeBuild('buildRoom12', buildRoom12);
-safeBuild('buildCorridor13', buildCorridor13);
-safeBuild('buildRoom13', buildRoom13);
 
 window.addEventListener('resize', onResize);
 setupControls();
